@@ -1,11 +1,10 @@
+const char* html = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Parking System - Remote Monitor</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <title>Smart Parking System</title>
   <style>
     :root {
       --available: #4CAF50;
@@ -21,51 +20,90 @@
       background-color: var(--background);
       margin: 0;
       padding: 20px;
+      color: var(--text);
+    }
+    
+    .header {
       text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     h1 {
-      color: #2c3e50;
-      margin-bottom: 5px;
+      margin: 0;
+      font-size: 2.2rem;
     }
     
     .subtitle {
-      color: #666;
-      margin-bottom: 30px;
+      font-weight: normal;
+      opacity: 0.9;
     }
     
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
     }
     
-    .slot {
+    .parking-slot {
       background-color: var(--card-bg);
       border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      transition: transform 0.3s;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
     
-    .slot:hover {
-      transform: translateY(-3px);
+    .parking-slot:hover {
+      transform: translateY(-5px);
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    .slot-title {
-      font-weight: bold;
-      font-size: 1.2rem;
+    .slot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 15px;
+    }
+    
+    .slot-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .slot-status {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: white;
+    }
+    
+    .available {
+      background-color: var(--available);
+    }
+    
+    .occupied {
+      background-color: var(--occupied);
+    }
+    
+    .reserved {
+      background-color: var(--reserved);
     }
     
     .led-panel {
       display: flex;
       justify-content: center;
       gap: 15px;
-      margin: 15px 0;
+      margin: 20px 0;
     }
     
     .led {
@@ -78,37 +116,73 @@
       transition: all 0.3s;
     }
     
-    /* LED colors */
-    .led.red { border-color: var(--occupied); color: var(--occupied); }
-    .led.yellow { border-color: var(--reserved); color: var(--reserved); }
-    .led.green { border-color: var(--available); color: var(--available); }
+    .led::after {
+      content: '';
+      position: absolute;
+      top: 5%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
+      opacity: 0;
+    }
     
-    /* LED when ON */
+    .led.on::after {
+      opacity: 0.4;
+    }
+    
     .led.on {
       background-color: currentColor;
       box-shadow: 0 0 15px currentColor;
     }
     
-    .status {
-      margin-top: 10px;
-      font-weight: bold;
-      padding: 5px 10px;
-      border-radius: 20px;
-      display: inline-block;
+    .led-red {
+      border-color: var(--occupied);
+      color: var(--occupied);
     }
     
-    .available { background-color: rgba(76, 175, 80, 0.2); color: var(--available); }
-    .occupied { background-color: rgba(244, 67, 54, 0.2); color: var(--occupied); }
+    .led-yellow {
+      border-color: var(--reserved);
+      color: var(--reserved);
+    }
     
-    .last-update {
+    .led-green {
+      border-color: var(--available);
+      color: var(--available);
+    }
+    
+    .led-label {
+      text-align: center;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      color: #666;
+    }
+    
+    .led-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .last-updated {
+      text-align: center;
       margin-top: 30px;
       font-size: 0.9rem;
-      color: #666;
+      color: #777;
     }
     
     @media (max-width: 600px) {
       .dashboard {
         grid-template-columns: 1fr;
+      }
+      
+      .header {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
       }
       
       .led {
@@ -119,97 +193,152 @@
   </style>
 </head>
 <body>
-  <h1>Smart Parking System</h1>
-  <div class="subtitle">Remote Monitoring Dashboard</div>
+  <div class="header">
+    <h1>Smart Parking System <span class="subtitle">Live Monitoring Panel</span></h1>
+  </div>
   
   <div class="dashboard">
-    <div class="slot">
-      <div class="slot-title">Slot 1</div>
-      <div class="led-panel">
-        <div class="led red" id="s1red" title="Red LED"></div>
-        <div class="led yellow" id="s1yellow" title="Yellow LED"></div>
-        <div class="led green" id="s1green" title="Green LED"></div>
+    <div class="parking-slot" id="slot1-card">
+      <div class="slot-header">
+        <h2 class="slot-title">Parking Slot 1</h2>
+        <span class="slot-status" id="slot1-status">Loading...</span>
       </div>
-      <div class="status" id="s1status">Loading...</div>
+      
+      <div class="led-panel">
+        <div class="led-container">
+          <div class="led led-red" id="slot1-red"></div>
+          <div class="led-label">Red</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-yellow" id="slot1-yellow"></div>
+          <div class="led-label">Yellow</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-green" id="slot1-green"></div>
+          <div class="led-label">Green</div>
+        </div>
+      </div>
     </div>
     
-    <div class="slot">
-      <div class="slot-title">Slot 2</div>
-      <div class="led-panel">
-        <div class="led red" id="s2red" title="Red LED"></div>
-        <div class="led yellow" id="s2yellow" title="Yellow LED"></div>
-        <div class="led green" id="s2green" title="Green LED"></div>
+    <div class="parking-slot" id="slot2-card">
+      <div class="slot-header">
+        <h2 class="slot-title">Parking Slot 2</h2>
+        <span class="slot-status" id="slot2-status">Loading...</span>
       </div>
-      <div class="status" id="s2status">Loading...</div>
+      
+      <div class="led-panel">
+        <div class="led-container">
+          <div class="led led-red" id="slot2-red"></div>
+          <div class="led-label">Red</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-yellow" id="slot2-yellow"></div>
+          <div class="led-label">Yellow</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-green" id="slot2-green"></div>
+          <div class="led-label">Green</div>
+        </div>
+      </div>
     </div>
     
-    <div class="slot">
-      <div class="slot-title">Slot 3</div>
-      <div class="led-panel">
-        <div class="led red" id="s3red" title="Red LED"></div>
-        <div class="led yellow" id="s3yellow" title="Yellow LED"></div>
-        <div class="led green" id="s3green" title="Green LED"></div>
+    <div class="parking-slot" id="slot3-card">
+      <div class="slot-header">
+        <h2 class="slot-title">Parking Slot 3</h2>
+        <span class="slot-status" id="slot3-status">Loading...</span>
       </div>
-      <div class="status" id="s3status">Loading...</div>
+      
+      <div class="led-panel">
+        <div class="led-container">
+          <div class="led led-red" id="slot3-red"></div>
+          <div class="led-label">Red</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-yellow" id="slot3-yellow"></div>
+          <div class="led-label">Yellow</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-green" id="slot3-green"></div>
+          <div class="led-label">Green</div>
+        </div>
+      </div>
     </div>
     
-    <div class="slot">
-      <div class="slot-title">Slot 4</div>
-      <div class="led-panel">
-        <div class="led red" id="s4red" title="Red LED"></div>
-        <div class="led yellow" id="s4yellow" title="Yellow LED"></div>
-        <div class="led green" id="s4green" title="Green LED"></div>
+    <div class="parking-slot" id="slot4-card">
+      <div class="slot-header">
+        <h2 class="slot-title">Parking Slot 4</h2>
+        <span class="slot-status" id="slot4-status">Loading...</span>
       </div>
-      <div class="status" id="s4status">Loading...</div>
+      
+      <div class="led-panel">
+        <div class="led-container">
+          <div class="led led-red" id="slot4-red"></div>
+          <div class="led-label">Red</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-yellow" id="slot4-yellow"></div>
+          <div class="led-label">Yellow</div>
+        </div>
+        <div class="led-container">
+          <div class="led led-green" id="slot4-green"></div>
+          <div class="led-label">Green</div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <div class="last-update">
-    Last updated: <span id="updateTime">Never</span>
+  <div class="last-updated" id="last-updated">
+    Last updated: <span id="update-time">Never</span>
   </div>
 
   <script>
-    // Your Firebase configuration (same as ESP32 code)
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
-      databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
-      projectId: "ledcontrol-a41fb"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    function updateSlot(slotNum, status) {
-      const redLed = document.getElementById(`s${slotNum}red`);
-      const yellowLed = document.getElementById(`s${slotNum}yellow`);
-      const greenLed = document.getElementById(`s${slotNum}green`);
-      const statusText = document.getElementById(`s${slotNum}status`);
-
-      // Reset all LEDs
-      redLed.classList.remove('on');
-      yellowLed.classList.remove('on');
-      greenLed.classList.remove('on');
-
-      if (status === 1) { // Occupied
-        redLed.classList.add('on');
-        statusText.textContent = "Occupied";
-        statusText.className = "status occupied";
-      } else { // Available
-        greenLed.classList.add('on');
-        statusText.textContent = "Available";
-        statusText.className = "status available";
-      }
-
-      // Update timestamp
-      document.getElementById('updateTime').textContent = new Date().toLocaleString();
+    function updateDashboard() {
+      fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+          // Update each slot
+          for (let i = 1; i <= 4; i++) {
+            const status = data[`slot${i}`];
+            const statusElement = document.getElementById(`slot${i}-status`);
+            const redLed = document.getElementById(`slot${i}-red`);
+            const yellowLed = document.getElementById(`slot${i}-yellow`);
+            const greenLed = document.getElementById(`slot${i}-green`);
+            const cardElement = document.getElementById(`slot${i}-card`);
+            
+            // Reset all LEDs first
+            redLed.classList.remove('on');
+            yellowLed.classList.remove('on');
+            greenLed.classList.remove('on');
+            
+            if (status === 0) {
+              // Available - Green LED on
+              statusElement.textContent = 'Available';
+              statusElement.className = 'slot-status available';
+              greenLed.classList.add('on');
+              cardElement.style.borderTop = '4px solid var(--available)';
+            } else {
+              // Occupied - Red LED on
+              statusElement.textContent = 'Occupied';
+              statusElement.className = 'slot-status occupied';
+              redLed.classList.add('on');
+              cardElement.style.borderTop = '4px solid var(--occupied)';
+            }
+          }
+          
+          // Update timestamp
+          const now = new Date();
+          document.getElementById('update-time').textContent = 
+            now.toLocaleTimeString() + ' ' + now.toLocaleDateString();
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
     }
 
-    // Listen for Firebase changes
-    database.ref('slot1').on('value', (snapshot) => updateSlot(1, snapshot.val()));
-    database.ref('slot2').on('value', (snapshot) => updateSlot(2, snapshot.val()));
-    database.ref('slot3').on('value', (snapshot) => updateSlot(3, snapshot.val()));
-    database.ref('slot4').on('value', (snapshot) => updateSlot(4, snapshot.val()));
+    // Update immediately and every 2 seconds
+    updateDashboard();
+    setInterval(updateDashboard, 2000);
   </script>
 </body>
 </html>
+)rawliteral";
