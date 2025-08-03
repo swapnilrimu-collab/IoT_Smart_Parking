@@ -10,8 +10,10 @@
     :root {
       --available: #4CAF50;
       --occupied: #F44336;
+      --reserved: #FFC107;
       --background: #f5f5f5;
       --card-bg: #ffffff;
+      --text: #333333;
     }
     
     body {
@@ -24,6 +26,12 @@
     
     h1 {
       color: #2c3e50;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
     }
     
     .dashboard {
@@ -38,13 +46,19 @@
       background-color: var(--card-bg);
       border-radius: 10px;
       padding: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    
+    .slot:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
     .slot-title {
       font-weight: bold;
       font-size: 1.2rem;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     
     .led-panel {
@@ -59,58 +73,62 @@
       height: 40px;
       border-radius: 50%;
       position: relative;
-      border: 2px solid #333;
-      background-color: #ddd;
+      border: 3px solid;
+      background-color: transparent;
+      transition: all 0.3s;
     }
     
+    /* LED colors */
+    .led.red { border-color: var(--occupied); color: var(--occupied); }
+    .led.yellow { border-color: var(--reserved); color: var(--reserved); }
+    .led.green { border-color: var(--available); color: var(--available); }
+    
+    /* LED when ON */
     .led.on {
+      background-color: currentColor;
       box-shadow: 0 0 15px currentColor;
-    }
-    
-    .led.red {
-      border-color: var(--occupied);
-      color: var(--occupied);
-    }
-    
-    .led.green {
-      border-color: var(--available);
-      color: var(--available);
-    }
-    
-    .led.yellow {
-      border-color: #FFC107;
-      color: #FFC107;
     }
     
     .status {
       margin-top: 10px;
       font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-block;
     }
     
-    .available {
-      color: var(--available);
-    }
-    
-    .occupied {
-      color: var(--occupied);
-    }
+    .available { background-color: rgba(76, 175, 80, 0.2); color: var(--available); }
+    .occupied { background-color: rgba(244, 67, 54, 0.2); color: var(--occupied); }
     
     .last-update {
       margin-top: 30px;
       font-size: 0.9rem;
       color: #666;
     }
+    
+    @media (max-width: 600px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .led {
+        width: 30px;
+        height: 30px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Smart Parking System - Remote Monitor</h1>
+  <h1>Smart Parking System</h1>
+  <div class="subtitle">Remote Monitoring Dashboard</div>
+  
   <div class="dashboard">
     <div class="slot">
       <div class="slot-title">Slot 1</div>
       <div class="led-panel">
-        <div class="led red" id="s1red"></div>
-        <div class="led yellow" id="s1yellow"></div>
-        <div class="led green" id="s1green"></div>
+        <div class="led red" id="s1red" title="Red LED"></div>
+        <div class="led yellow" id="s1yellow" title="Yellow LED"></div>
+        <div class="led green" id="s1green" title="Green LED"></div>
       </div>
       <div class="status" id="s1status">Loading...</div>
     </div>
@@ -118,9 +136,9 @@
     <div class="slot">
       <div class="slot-title">Slot 2</div>
       <div class="led-panel">
-        <div class="led red" id="s2red"></div>
-        <div class="led yellow" id="s2yellow"></div>
-        <div class="led green" id="s2green"></div>
+        <div class="led red" id="s2red" title="Red LED"></div>
+        <div class="led yellow" id="s2yellow" title="Yellow LED"></div>
+        <div class="led green" id="s2green" title="Green LED"></div>
       </div>
       <div class="status" id="s2status">Loading...</div>
     </div>
@@ -128,9 +146,9 @@
     <div class="slot">
       <div class="slot-title">Slot 3</div>
       <div class="led-panel">
-        <div class="led red" id="s3red"></div>
-        <div class="led yellow" id="s3yellow"></div>
-        <div class="led green" id="s3green"></div>
+        <div class="led red" id="s3red" title="Red LED"></div>
+        <div class="led yellow" id="s3yellow" title="Yellow LED"></div>
+        <div class="led green" id="s3green" title="Green LED"></div>
       </div>
       <div class="status" id="s3status">Loading...</div>
     </div>
@@ -138,9 +156,9 @@
     <div class="slot">
       <div class="slot-title">Slot 4</div>
       <div class="led-panel">
-        <div class="led red" id="s4red"></div>
-        <div class="led yellow" id="s4yellow"></div>
-        <div class="led green" id="s4green"></div>
+        <div class="led red" id="s4red" title="Red LED"></div>
+        <div class="led yellow" id="s4yellow" title="Yellow LED"></div>
+        <div class="led green" id="s4green" title="Green LED"></div>
       </div>
       <div class="status" id="s4status">Loading...</div>
     </div>
