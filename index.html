@@ -1,3 +1,4 @@
+const char* html = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +21,6 @@
       margin: 0;
       padding: 20px;
       color: var(--text);
-      min-height: 100vh;
     }
     
     .header {
@@ -35,14 +35,13 @@
     
     h1 {
       margin: 0;
-      font-size: 2.2rem;
+      font-size: 2.5rem;
     }
     
     .subtitle {
       font-weight: normal;
       opacity: 0.9;
       font-size: 1.1rem;
-      margin-top: 5px;
     }
     
     .dashboard {
@@ -197,10 +196,11 @@
   </div>
   
   <div class="dashboard">
+    <!-- Row 1 -->
     <div class="parking-slot" id="slot1-card">
       <div class="slot-header">
         <h2 class="slot-title">Slot 1</h2>
-        <span class="slot-status" id="slot1-status">LOADING...</span>
+        <span class="slot-status" id="slot1-status">Loading...</span>
       </div>
       
       <div class="led-panel">
@@ -222,7 +222,7 @@
     <div class="parking-slot" id="slot2-card">
       <div class="slot-header">
         <h2 class="slot-title">Slot 2</h2>
-        <span class="slot-status" id="slot2-status">LOADING...</span>
+        <span class="slot-status" id="slot2-status">Loading...</span>
       </div>
       
       <div class="led-panel">
@@ -241,10 +241,11 @@
       </div>
     </div>
     
+    <!-- Row 2 -->
     <div class="parking-slot" id="slot3-card">
       <div class="slot-header">
         <h2 class="slot-title">Slot 3</h2>
-        <span class="slot-status" id="slot3-status">LOADING...</span>
+        <span class="slot-status" id="slot3-status">Loading...</span>
       </div>
       
       <div class="led-panel">
@@ -266,7 +267,7 @@
     <div class="parking-slot" id="slot4-card">
       <div class="slot-header">
         <h2 class="slot-title">Slot 4</h2>
-        <span class="slot-status" id="slot4-status">LOADING...</span>
+        <span class="slot-status" id="slot4-status">Loading...</span>
       </div>
       
       <div class="led-panel">
@@ -287,18 +288,13 @@
   </div>
   
   <div class="last-updated" id="last-updated">
-    Last updated: <span id="update-time">NEVER</span>
+    Last updated: <span id="update-time">Never</span>
   </div>
 
   <script>
     function updateDashboard() {
       fetch('/status')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
           // Update each slot
           for (let i = 1; i <= 4; i++) {
@@ -336,20 +332,13 @@
         })
         .catch(error => {
           console.error('Error fetching data:', error);
-          document.getElementById('update-time').textContent = 'ERROR - TRYING AGAIN';
         });
     }
 
-    // Initial update
+    // Update immediately and every 2 seconds
     updateDashboard();
-    
-    // Set up periodic updates every 2 seconds
-    const updateInterval = setInterval(updateDashboard, 2000);
-    
-    // Clean up interval when page is unloaded
-    window.addEventListener('beforeunload', () => {
-      clearInterval(updateInterval);
-    });
+    setInterval(updateDashboard, 2000);
   </script>
 </body>
 </html>
+)rawliteral";
