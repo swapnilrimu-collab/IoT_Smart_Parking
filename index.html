@@ -15,6 +15,7 @@
       --card-bg: #ffffff;
       --text: #333333;
       --led-off: #dddddd;
+      --slot-height: 220px;
     }
     
     body {
@@ -23,6 +24,7 @@
       margin: 0;
       padding: 20px;
       color: var(--text);
+      min-height: 100vh;
     }
     
     .header {
@@ -33,6 +35,9 @@
       color: white;
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
     }
     
     h1 {
@@ -43,6 +48,7 @@
     .subtitle {
       font-weight: normal;
       opacity: 0.9;
+      font-size: 1.2rem;
     }
     
     .dashboard {
@@ -61,6 +67,10 @@
       transition: transform 0.3s ease;
       position: relative;
       overflow: hidden;
+      height: var(--slot-height);
+      display: flex;
+      flex-direction: column;
+      border-top: 4px solid transparent;
     }
     
     .parking-slot:hover {
@@ -105,7 +115,7 @@
       display: flex;
       justify-content: center;
       gap: 15px;
-      margin: 20px 0;
+      margin: auto 0;
     }
     
     .led {
@@ -180,9 +190,16 @@
       margin-top: 30px;
       font-size: 0.9rem;
       color: #777;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 10px;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .dashboard {
         grid-template-columns: 1fr;
       }
@@ -195,9 +212,17 @@
         font-size: 1.8rem;
       }
       
+      .subtitle {
+        font-size: 1rem;
+      }
+      
       .led {
         width: 30px;
         height: 30px;
+      }
+      
+      :root {
+        --slot-height: 200px;
       }
     }
   </style>
@@ -318,6 +343,7 @@
       const redLed = document.getElementById(`slot${slotNum}-red`);
       const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
       const greenLed = document.getElementById(`slot${slotNum}-green`);
+      const cardElement = document.getElementById(`slot${slotNum}-card`);
       
       // Reset all LEDs
       redLed.classList.remove('on');
@@ -329,15 +355,24 @@
         statusElement.textContent = 'Available';
         statusElement.className = 'slot-status available';
         greenLed.classList.add('on');
-      } else {
+        cardElement.style.borderTopColor = 'var(--available)';
+      } else if (status === 1) {
         // Occupied - Red LED on
         statusElement.textContent = 'Occupied';
         statusElement.className = 'slot-status occupied';
         redLed.classList.add('on');
+        cardElement.style.borderTopColor = 'var(--occupied)';
+      } else if (status === 2) {
+        // Reserved - Yellow LED on
+        statusElement.textContent = 'Reserved';
+        statusElement.className = 'slot-status reserved';
+        yellowLed.classList.add('on');
+        cardElement.style.borderTopColor = 'var(--reserved)';
       }
       
       // Update timestamp
-      document.getElementById('update-time').textContent = new Date().toLocaleString();
+      const now = new Date();
+      document.getElementById('update-time').textContent = now.toLocaleString();
     }
 
     // Listen for real-time updates
@@ -345,6 +380,14 @@
     database.ref('slot2').on('value', (snapshot) => updateSlot(2, snapshot.val()));
     database.ref('slot3').on('value', (snapshot) => updateSlot(3, snapshot.val()));
     database.ref('slot4').on('value', (snapshot) => updateSlot(4, snapshot.val()));
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set initial border colors
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`slot${i}-card`).style.borderTop = '4px solid transparent';
+      }
+    });
   </script>
 </body>
 </html>
