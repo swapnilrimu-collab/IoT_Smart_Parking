@@ -1,4 +1,3 @@
-const char* html = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,54 +34,52 @@ const char* html = R"rawliteral(
     
     h1 {
       margin: 0;
-      font-size: 2.5rem;
+      font-size: 2.2rem;
     }
     
     .subtitle {
       font-weight: normal;
       opacity: 0.9;
-      font-size: 1.1rem;
     }
     
     .dashboard {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 25px;
+      gap: 20px;
       max-width: 1200px;
       margin: 0 auto;
     }
     
     .parking-slot {
       background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
-      border-top: 5px solid transparent;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
     }
     
     .parking-slot:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
     .slot-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     
     .slot-title {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 600;
       margin: 0;
     }
     
     .slot-status {
-      padding: 6px 15px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 500;
       color: white;
     }
@@ -102,39 +99,23 @@ const char* html = R"rawliteral(
     .led-panel {
       display: flex;
       justify-content: center;
-      gap: 25px;
-      margin: 25px 0;
+      gap: 15px;
+      margin: 20px 0;
     }
     
     .led {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       position: relative;
-      border: 4px solid;
+      border: 3px solid;
       background-color: transparent;
-      transition: all 0.3s ease;
-    }
-    
-    .led::after {
-      content: '';
-      position: absolute;
-      top: 5%;
-      left: 10%;
-      width: 80%;
-      height: 80%;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
-      opacity: 0;
-    }
-    
-    .led.on::after {
-      opacity: 0.4;
+      transition: all 0.3s;
     }
     
     .led.on {
       background-color: currentColor;
-      box-shadow: 0 0 25px currentColor;
+      box-shadow: 0 0 15px currentColor;
     }
     
     .led-red {
@@ -154,10 +135,9 @@ const char* html = R"rawliteral(
     
     .led-label {
       text-align: center;
-      font-size: 1rem;
-      margin-top: 8px;
+      font-size: 0.8rem;
+      margin-top: 5px;
       color: #666;
-      font-weight: 500;
     }
     
     .led-container {
@@ -168,23 +148,14 @@ const char* html = R"rawliteral(
     
     .last-updated {
       text-align: center;
-      margin-top: 40px;
-      font-size: 1rem;
+      margin-top: 30px;
+      font-size: 0.9rem;
       color: #777;
     }
     
     @media (max-width: 768px) {
       .dashboard {
         grid-template-columns: 1fr;
-      }
-      
-      .parking-slot {
-        padding: 20px;
-      }
-      
-      .led {
-        width: 50px;
-        height: 50px;
       }
     }
   </style>
@@ -202,19 +173,18 @@ const char* html = R"rawliteral(
         <h2 class="slot-title">Slot 1</h2>
         <span class="slot-status" id="slot1-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot1-red"></div>
-          <div class="led-label">RED</div>
+          <div class="led-label">Red</div>
         </div>
         <div class="led-container">
           <div class="led led-yellow" id="slot1-yellow"></div>
-          <div class="led-label">YELLOW</div>
+          <div class="led-label">Yellow</div>
         </div>
         <div class="led-container">
           <div class="led led-green" id="slot1-green"></div>
-          <div class="led-label">GREEN</div>
+          <div class="led-label">Green</div>
         </div>
       </div>
     </div>
@@ -224,19 +194,18 @@ const char* html = R"rawliteral(
         <h2 class="slot-title">Slot 2</h2>
         <span class="slot-status" id="slot2-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot2-red"></div>
-          <div class="led-label">RED</div>
+          <div class="led-label">Red</div>
         </div>
         <div class="led-container">
           <div class="led led-yellow" id="slot2-yellow"></div>
-          <div class="led-label">YELLOW</div>
+          <div class="led-label">Yellow</div>
         </div>
         <div class="led-container">
           <div class="led led-green" id="slot2-green"></div>
-          <div class="led-label">GREEN</div>
+          <div class="led-label">Green</div>
         </div>
       </div>
     </div>
@@ -247,19 +216,18 @@ const char* html = R"rawliteral(
         <h2 class="slot-title">Slot 3</h2>
         <span class="slot-status" id="slot3-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot3-red"></div>
-          <div class="led-label">RED</div>
+          <div class="led-label">Red</div>
         </div>
         <div class="led-container">
           <div class="led led-yellow" id="slot3-yellow"></div>
-          <div class="led-label">YELLOW</div>
+          <div class="led-label">Yellow</div>
         </div>
         <div class="led-container">
           <div class="led led-green" id="slot3-green"></div>
-          <div class="led-label">GREEN</div>
+          <div class="led-label">Green</div>
         </div>
       </div>
     </div>
@@ -269,19 +237,18 @@ const char* html = R"rawliteral(
         <h2 class="slot-title">Slot 4</h2>
         <span class="slot-status" id="slot4-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot4-red"></div>
-          <div class="led-label">RED</div>
+          <div class="led-label">Red</div>
         </div>
         <div class="led-container">
           <div class="led led-yellow" id="slot4-yellow"></div>
-          <div class="led-label">YELLOW</div>
+          <div class="led-label">Yellow</div>
         </div>
         <div class="led-container">
           <div class="led led-green" id="slot4-green"></div>
-          <div class="led-label">GREEN</div>
+          <div class="led-label">Green</div>
         </div>
       </div>
     </div>
@@ -296,49 +263,32 @@ const char* html = R"rawliteral(
       fetch('/status')
         .then(response => response.json())
         .then(data => {
-          // Update each slot
           for (let i = 1; i <= 4; i++) {
             const status = data[`slot${i}`];
             const statusElement = document.getElementById(`slot${i}-status`);
             const redLed = document.getElementById(`slot${i}-red`);
-            const yellowLed = document.getElementById(`slot${i}-yellow`);
             const greenLed = document.getElementById(`slot${i}-green`);
-            const cardElement = document.getElementById(`slot${i}-card`);
             
-            // Reset all LEDs first
             redLed.classList.remove('on');
-            yellowLed.classList.remove('on');
             greenLed.classList.remove('on');
             
             if (status === 0) {
-              // Available - Green LED on
-              statusElement.textContent = 'AVAILABLE';
+              statusElement.textContent = 'Available';
               statusElement.className = 'slot-status available';
               greenLed.classList.add('on');
-              cardElement.style.borderTopColor = 'var(--available)';
             } else {
-              // Occupied - Red LED on
-              statusElement.textContent = 'OCCUPIED';
+              statusElement.textContent = 'Occupied';
               statusElement.className = 'slot-status occupied';
               redLed.classList.add('on');
-              cardElement.style.borderTopColor = 'var(--occupied)';
             }
           }
-          
-          // Update timestamp
-          const now = new Date();
-          document.getElementById('update-time').textContent = 
-            now.toLocaleTimeString() + ' | ' + now.toLocaleDateString();
+          document.getElementById('update-time').textContent = new Date().toLocaleString();
         })
-        .catch(error => {
-          console.error('Error fetching data:', error);
-        });
+        .catch(error => console.error('Error:', error));
     }
 
-    // Update immediately and every 2 seconds
     updateDashboard();
     setInterval(updateDashboard, 2000);
   </script>
 </body>
 </html>
-)rawliteral";
