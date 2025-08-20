@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
     :root {
       --available: #4CAF50;
@@ -17,16 +15,15 @@
       --led-off: #dddddd;
       --slot-height: 220px;
     }
-    
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: var(--background);
       margin: 0;
       padding: 20px;
       color: var(--text);
-      min-height: 100vh;
     }
-    
+
     .header {
       text-align: center;
       margin-bottom: 30px;
@@ -34,23 +31,19 @@
       background: linear-gradient(135deg, #2c3e50, #3498db);
       color: white;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
+
     h1 {
       margin: 0;
       font-size: 2.2rem;
     }
-    
+
     .subtitle {
       font-weight: normal;
       opacity: 0.9;
-      font-size: 1.2rem;
     }
-    
+
     .dashboard {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -58,39 +51,39 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-    
+
     .parking-slot {
       background-color: var(--card-bg);
       border-radius: 10px;
       padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
       transition: transform 0.3s ease;
       position: relative;
       overflow: hidden;
       height: var(--slot-height);
       display: flex;
       flex-direction: column;
-      border-top: 4px solid transparent;
+      border-top: 4px solid transparent; /* default no color */
     }
-    
+
     .parking-slot:hover {
       transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
-    
+
     .slot-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
     }
-    
+
     .slot-title {
       font-size: 1.3rem;
       font-weight: 600;
       margin: 0;
     }
-    
+
     .slot-status {
       padding: 5px 12px;
       border-radius: 20px;
@@ -98,34 +91,34 @@
       font-weight: 500;
       color: white;
     }
-    
+
     .available {
       background-color: var(--available);
     }
-    
+
     .occupied {
       background-color: var(--occupied);
     }
-    
+
     .reserved {
       background-color: var(--reserved);
     }
-    
+
     .led-panel {
       display: flex;
       justify-content: center;
       gap: 15px;
       margin: auto 0;
     }
-    
+
     .led {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       position: relative;
-      box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-    
+
     .led::after {
       content: '';
       position: absolute;
@@ -134,93 +127,128 @@
       width: 80%;
       height: 80%;
       border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), transparent);
       opacity: 0;
     }
-    
+
     .led.on::after {
       opacity: 0.4;
     }
-    
+
     .led-red {
       background-color: var(--led-off);
       border: 2px solid #cc0000;
     }
-    
+
     .led-red.on {
       background-color: var(--occupied);
       box-shadow: 0 0 15px rgba(244, 67, 54, 0.7);
     }
-    
+
     .led-yellow {
       background-color: var(--led-off);
       border: 2px solid #cc9900;
     }
-    
+
     .led-yellow.on {
       background-color: var(--reserved);
       box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
     }
-    
+
     .led-green {
       background-color: var(--led-off);
       border: 2px solid #009900;
     }
-    
+
     .led-green.on {
       background-color: var(--available);
       box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
     }
-    
+
     .led-label {
       text-align: center;
       font-size: 0.8rem;
       margin-top: 5px;
       color: #666;
     }
-    
+
     .led-container {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    
+
     .last-updated {
       text-align: center;
       margin-top: 30px;
       font-size: 0.9rem;
       color: #777;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 10px;
-      background-color: white;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
-    @media (max-width: 768px) {
+
+    /* Message Form Styles */
+    .form-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+      margin-top: 0;
+    }
+
+    .form-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .form-container input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    .form-container button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #form-response {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    @media (max-width: 600px) {
       .dashboard {
         grid-template-columns: 1fr;
       }
-      
+
       .header {
         padding: 15px;
       }
-      
+
       h1 {
         font-size: 1.8rem;
       }
-      
-      .subtitle {
-        font-size: 1rem;
-      }
-      
+
       .led {
         width: 30px;
         height: 30px;
       }
-      
+
       :root {
         --slot-height: 200px;
       }
@@ -229,16 +257,15 @@
 </head>
 <body>
   <div class="header">
-    <h1>Smart Parking System <span class="subtitle">Live Monitoring</span></h1>
+    <h1>Smart Parking System <span class="subtitle">LED Monitoring Panel</span></h1>
   </div>
-  
+
   <div class="dashboard">
     <div class="parking-slot" id="slot1-card">
       <div class="slot-header">
         <h2 class="slot-title">Parking Slot 1</h2>
         <span class="slot-status" id="slot1-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot1-red"></div>
@@ -254,13 +281,12 @@
         </div>
       </div>
     </div>
-    
+
     <div class="parking-slot" id="slot2-card">
       <div class="slot-header">
         <h2 class="slot-title">Parking Slot 2</h2>
         <span class="slot-status" id="slot2-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot2-red"></div>
@@ -276,13 +302,12 @@
         </div>
       </div>
     </div>
-    
+
     <div class="parking-slot" id="slot3-card">
       <div class="slot-header">
         <h2 class="slot-title">Parking Slot 3</h2>
         <span class="slot-status" id="slot3-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot3-red"></div>
@@ -298,13 +323,12 @@
         </div>
       </div>
     </div>
-    
+
     <div class="parking-slot" id="slot4-card">
       <div class="slot-header">
         <h2 class="slot-title">Parking Slot 4</h2>
         <span class="slot-status" id="slot4-status">Loading...</span>
       </div>
-      
       <div class="led-panel">
         <div class="led-container">
           <div class="led led-red" id="slot4-red"></div>
@@ -321,10 +345,119 @@
       </div>
     </div>
   </div>
-  
+
   <div class="last-updated" id="last-updated">
     Last updated: <span id="update-time">Never</span>
   </div>
+
+  <div class="form-container">
+    <h2>Send Message to ESP32</h2>
+    <form id="message-form">
+      <div>
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message" required placeholder="e.g. 1,DHK-202326" />
+      </div>
+      <button type="submit">Send Message</button>
+    </form>
+    <div id="form-response"></div>
+  </div>
+
+  <script>
+    function updateDashboard() {
+      fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+          for (let i = 1; i <= 4; i++) {
+            const status = data[`slot${i}`];
+            const statusElement = document.getElementById(`slot${i}-status`);
+            const redLed = document.getElementById(`slot${i}-red`);
+            const yellowLed = document.getElementById(`slot${i}-yellow`);
+            const greenLed = document.getElementById(`slot${i}-green`);
+            const card = document.getElementById(`slot${i}-card`);
+
+            redLed.classList.remove('on');
+            yellowLed.classList.remove('on');
+            greenLed.classList.remove('on');
+            card.style.borderTop = '4px solid transparent';
+
+            if (status == 1) {
+              statusElement.textContent = 'Occupied';
+              statusElement.className = 'slot-status occupied';
+              redLed.classList.add('on');
+              card.style.borderTop = '4px solid var(--occupied)';
+            } else if (status == 2) {
+              statusElement.textContent = 'Reserved';
+              statusElement.className = 'slot-status reserved';
+              yellowLed.classList.add('on');
+              card.style.borderTop = '4px solid var(--reserved)';
+            } else {
+              statusElement.textContent = 'Available';
+              statusElement.className = 'slot-status available';
+              greenLed.classList.add('on');
+              card.style.borderTop = '4px solid var(--available)';
+            }
+          }
+          document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
+        })
+        .catch(error => console.error('Error updating dashboard:', error));
+    }
+
+    // Initial and periodic update every 1 second
+    updateDashboard();
+    setInterval(updateDashboard, 1000);
+
+    // Handle message form submission (JSON response + auto-hide message)
+    document.getElementById('message-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('message').value.trim();
+      if (!message) return;
+
+      const responseDiv = document.getElementById('form-response');
+      responseDiv.style.display = 'block';
+      responseDiv.style.backgroundColor = '#ddd';
+      responseDiv.style.color = '#333';
+      responseDiv.textContent = 'Sending...';
+
+      const hideLater = () => {
+        setTimeout(() => {
+          responseDiv.style.display = 'none';
+        }, 3000);
+      };
+
+      try {
+        const res = await fetch('/sendMessage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'message=' + encodeURIComponent(message)
+        });
+
+        const text = await res.text();
+        let payload = null;
+        try { payload = JSON.parse(text); } catch(e) {}
+
+        if (res.ok && payload && payload.ok === true) {
+          responseDiv.style.backgroundColor = '#4CAF50';
+          responseDiv.style.color = 'white';
+          responseDiv.textContent = '✅ ' + (payload.message || 'Reservation successful.');
+          document.getElementById('message').value = '';
+          updateDashboard();
+        } else {
+          responseDiv.style.backgroundColor = '#F44336';
+          responseDiv.style.color = 'white';
+          const msg = (payload && payload.message) ? payload.message : (text || 'Reservation failed.');
+          responseDiv.textContent = '❌ ' + msg;
+        }
+        hideLater();
+      } catch (err) {
+        responseDiv.style.backgroundColor = '#F44336';
+        responseDiv.style.color = 'white';
+        responseDiv.textContent = '❌ Error sending message: ' + err;
+        hideLater();
+      }
+    });
+  </script>
+</body>
+</html>
 
   <script>
     // Firebase configuration
