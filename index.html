@@ -444,7 +444,7 @@
     });
 
     // Handle message form submission via Firebase
-    document.getElementById('message-form').addEventListener('submit', async (event) => {
+     document.getElementById('message-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message').value.trim();
       if (!message) return;
@@ -473,8 +473,8 @@
           throw new Error('Car number is required');
         }
 
-        // Send reservation request to Firebase
-        await database.ref('/reservationRequests').push({
+        // Send reservation request to Firebase - SIMPLIFIED APPROACH
+        await database.ref('/reservationRequest').set({
           slot: slotNum,
           carNumber: carNumber,
           timestamp: Date.now(),
@@ -489,7 +489,7 @@
         // Auto-hide after 5 seconds
         setTimeout(() => {
           responseDiv.style.display = 'none';
-        }, 5000);
+        }, 3000);
 
       } catch (err) {
         responseDiv.style.backgroundColor = '#F44336';
@@ -498,7 +498,7 @@
         
         setTimeout(() => {
           responseDiv.style.display = 'none';
-        }, 5000);
+        }, 3000);
       }
     });
 </script>
