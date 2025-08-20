@@ -378,7 +378,7 @@
     <div id="form-response"></div>
   </div>
 
-  <script>
+ <script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
@@ -426,14 +426,20 @@
       document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
-    // Listen for real-time Firebase updates
+    // Listen for real-time Firebase updates - FIXED VERSION
     database.ref('parkingStatus').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        updateSlot(1, data.slot1, data.car1 || "");
-        updateSlot(2, data.slot2, data.car2 || "");
-        updateSlot(3, data.slot3, data.car3 || "");
-        updateSlot(4, data.slot4, data.car4 || "");
+        // Determine status based on both slot value and car number
+        const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
+        const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
+        const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
+        const status4 = data.slot4 === 1 ? 1 : (data.car4 && data.car4 !== "" ? 2 : 0);
+        
+        updateSlot(1, status1, data.car1 || "");
+        updateSlot(2, status2, data.car2 || "");
+        updateSlot(3, status3, data.car3 || "");
+        updateSlot(4, status4, data.car4 || "");
       }
     });
 
@@ -495,6 +501,6 @@
         }, 5000);
       }
     });
-  </script>
+</script>
 </body>
 </html>
