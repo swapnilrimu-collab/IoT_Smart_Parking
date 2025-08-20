@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Parking System</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
     :root {
       --available: #4CAF50;
@@ -63,7 +65,7 @@
       height: var(--slot-height);
       display: flex;
       flex-direction: column;
-      border-top: 4px solid transparent; /* default no color */
+      border-top: 4px solid transparent;
     }
 
     .parking-slot:hover {
@@ -188,7 +190,7 @@
     /* Message Form Styles */
     .form-container {
       max-width: 600px;
-      margin: 20px auto;
+      margin: 40px auto;
       padding: 20px;
       background: white;
       border-radius: 8px;
@@ -197,38 +199,47 @@
 
     .form-container h2 {
       margin-top: 0;
+      color: #2c3e50;
     }
 
     .form-container label {
       display: block;
       margin-bottom: 5px;
       font-weight: 500;
+      color: #333;
     }
 
     .form-container input[type="text"] {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 16px;
       margin-bottom: 15px;
+      box-sizing: border-box;
     }
 
     .form-container button {
       background: #3498db;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 4px;
       font-size: 16px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .form-container button:hover {
+      background: #2980b9;
     }
 
     #form-response {
       margin-top: 15px;
-      padding: 10px;
+      padding: 12px;
       border-radius: 4px;
       display: none;
+      font-weight: 500;
     }
 
     @media (max-width: 600px) {
@@ -252,12 +263,17 @@
       :root {
         --slot-height: 200px;
       }
+
+      .form-container {
+        margin: 20px auto;
+        padding: 15px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Smart Parking System <span class="subtitle">LED Monitoring Panel</span></h1>
+    <h1>Smart Parking System <span class="subtitle">Live Monitoring Panel</span></h1>
   </div>
 
   <div class="dashboard">
@@ -363,50 +379,61 @@
   </div>
 
   <script>
-    function updateDashboard() {
-      fetch('/status')
-        .then(response => response.json())
-        .then(data => {
-          for (let i = 1; i <= 4; i++) {
-            const status = data[`slot${i}`];
-            const statusElement = document.getElementById(`slot${i}-status`);
-            const redLed = document.getElementById(`slot${i}-red`);
-            const yellowLed = document.getElementById(`slot${i}-yellow`);
-            const greenLed = document.getElementById(`slot${i}-green`);
-            const card = document.getElementById(`slot${i}-card`);
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
+      databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
+      projectId: "ledcontrol-a41fb"
+    };
 
-            redLed.classList.remove('on');
-            yellowLed.classList.remove('on');
-            greenLed.classList.remove('on');
-            card.style.borderTop = '4px solid transparent';
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-            if (status == 1) {
-              statusElement.textContent = 'Occupied';
-              statusElement.className = 'slot-status occupied';
-              redLed.classList.add('on');
-              card.style.borderTop = '4px solid var(--occupied)';
-            } else if (status == 2) {
-              statusElement.textContent = 'Reserved';
-              statusElement.className = 'slot-status reserved';
-              yellowLed.classList.add('on');
-              card.style.borderTop = '4px solid var(--reserved)';
-            } else {
-              statusElement.textContent = 'Available';
-              statusElement.className = 'slot-status available';
-              greenLed.classList.add('on');
-              card.style.borderTop = '4px solid var(--available)';
-            }
-          }
-          document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
-        })
-        .catch(error => console.error('Error updating dashboard:', error));
+    function updateSlot(slotNum, status) {
+      const statusElement = document.getElementById(`slot${slotNum}-status`);
+      const redLed = document.getElementById(`slot${slotNum}-red`);
+      const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
+      const greenLed = document.getElementById(`slot${slotNum}-green`);
+      const card = document.getElementById(`slot${slotNum}-card`);
+
+      // Reset all LEDs and borders
+      redLed.classList.remove('on');
+      yellowLed.classList.remove('on');
+      greenLed.classList.remove('on');
+      card.style.borderTop = '4px solid transparent';
+
+      if (status === 1) {
+        // Occupied - Red LED on
+        statusElement.textContent = 'Occupied';
+        statusElement.className = 'slot-status occupied';
+        redLed.classList.add('on');
+        card.style.borderTop = '4px solid var(--occupied)';
+      } else if (status === 2) {
+        // Reserved - Yellow LED on
+        statusElement.textContent = 'Reserved';
+        statusElement.className = 'slot-status reserved';
+        yellowLed.classList.add('on');
+        card.style.borderTop = '4px solid var(--reserved)';
+      } else {
+        // Available - Green LED on
+        statusElement.textContent = 'Available';
+        statusElement.className = 'slot-status available';
+        greenLed.classList.add('on');
+        card.style.borderTop = '4px solid var(--available)';
+      }
+
+      // Update timestamp
+      document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
-    // Initial and periodic update every 1 second
-    updateDashboard();
-    setInterval(updateDashboard, 1000);
+    // Listen for real-time Firebase updates
+    database.ref('slot1').on('value', (snapshot) => updateSlot(1, snapshot.val()));
+    database.ref('slot2').on('value', (snapshot) => updateSlot(2, snapshot.val()));
+    database.ref('slot3').on('value', (snapshot) => updateSlot(3, snapshot.val()));
+    database.ref('slot4').on('value', (snapshot) => updateSlot(4, snapshot.val()));
 
-    // Handle message form submission (JSON response + auto-hide message)
+    // Handle message form submission
     document.getElementById('message-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message').value.trim();
@@ -425,100 +452,18 @@
       };
 
       try {
-        const res = await fetch('/sendMessage', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'message=' + encodeURIComponent(message)
-        });
-
-        const text = await res.text();
-        let payload = null;
-        try { payload = JSON.parse(text); } catch(e) {}
-
-        if (res.ok && payload && payload.ok === true) {
-          responseDiv.style.backgroundColor = '#4CAF50';
-          responseDiv.style.color = 'white';
-          responseDiv.textContent = '✅ ' + (payload.message || 'Reservation successful.');
-          document.getElementById('message').value = '';
-          updateDashboard();
-        } else {
-          responseDiv.style.backgroundColor = '#F44336';
-          responseDiv.style.color = 'white';
-          const msg = (payload && payload.message) ? payload.message : (text || 'Reservation failed.');
-          responseDiv.textContent = '❌ ' + msg;
-        }
+        // For GitHub Pages, we can't directly send to ESP32
+        // This would need to be handled differently (maybe through Firebase functions)
+        responseDiv.style.backgroundColor = '#F44336';
+        responseDiv.style.color = 'white';
+        responseDiv.textContent = '❌ Message sending not configured for GitHub Pages. Use local ESP32 interface instead.';
         hideLater();
+        
       } catch (err) {
         responseDiv.style.backgroundColor = '#F44336';
         responseDiv.style.color = 'white';
-        responseDiv.textContent = '❌ Error sending message: ' + err;
+        responseDiv.textContent = '❌ Error: ' + err.message;
         hideLater();
-      }
-    });
-  </script>
-</body>
-</html>
-
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
-      databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
-      projectId: "ledcontrol-a41fb"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    function updateSlot(slotNum, status) {
-      const statusElement = document.getElementById(`slot${slotNum}-status`);
-      const redLed = document.getElementById(`slot${slotNum}-red`);
-      const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
-      const greenLed = document.getElementById(`slot${slotNum}-green`);
-      const cardElement = document.getElementById(`slot${slotNum}-card`);
-      
-      // Reset all LEDs
-      redLed.classList.remove('on');
-      yellowLed.classList.remove('on');
-      greenLed.classList.remove('on');
-      
-      if (status === 0) {
-        // Available - Green LED on
-        statusElement.textContent = 'Available';
-        statusElement.className = 'slot-status available';
-        greenLed.classList.add('on');
-        cardElement.style.borderTopColor = 'var(--available)';
-      } else if (status === 1) {
-        // Occupied - Red LED on
-        statusElement.textContent = 'Occupied';
-        statusElement.className = 'slot-status occupied';
-        redLed.classList.add('on');
-        cardElement.style.borderTopColor = 'var(--occupied)';
-      } else if (status === 2) {
-        // Reserved - Yellow LED on
-        statusElement.textContent = 'Reserved';
-        statusElement.className = 'slot-status reserved';
-        yellowLed.classList.add('on');
-        cardElement.style.borderTopColor = 'var(--reserved)';
-      }
-      
-      // Update timestamp
-      const now = new Date();
-      document.getElementById('update-time').textContent = now.toLocaleString();
-    }
-
-    // Listen for real-time updates
-    database.ref('slot1').on('value', (snapshot) => updateSlot(1, snapshot.val()));
-    database.ref('slot2').on('value', (snapshot) => updateSlot(2, snapshot.val()));
-    database.ref('slot3').on('value', (snapshot) => updateSlot(3, snapshot.val()));
-    database.ref('slot4').on('value', (snapshot) => updateSlot(4, snapshot.val()));
-
-    // Initial setup
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set initial border colors
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById(`slot${i}-card`).style.borderTop = '4px solid transparent';
       }
     });
   </script>
