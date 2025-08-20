@@ -367,13 +367,13 @@
   </div>
 
   <div class="form-container">
-    <h2>Send Message to ESP32</h2>
+    <h2>Send Reservation Request</h2>
     <form id="message-form">
       <div>
-        <label for="message">Message:</label>
+        <label for="message">Message (Slot,CarNumber):</label>
         <input type="text" id="message" name="message" required placeholder="e.g. 1,DHK-202326" />
       </div>
-      <button type="submit">Send Message</button>
+      <button type="submit">Send Reservation</button>
     </form>
     <div id="form-response"></div>
   </div>
@@ -390,7 +390,7 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    function updateSlot(slotNum, status) {
+    function updateSlot(slotNum, status, carNumber = "") {
       const statusElement = document.getElementById(`slot${slotNum}-status`);
       const redLed = document.getElementById(`slot${slotNum}-red`);
       const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
@@ -405,13 +405,13 @@
 
       if (status === 1) {
         // Occupied - Red LED on
-        statusElement.textContent = 'Occupied';
+        statusElement.textContent = carNumber ? `Occupied (${carNumber})` : 'Occupied';
         statusElement.className = 'slot-status occupied';
         redLed.classList.add('on');
         card.style.borderTop = '4px solid var(--occupied)';
       } else if (status === 2) {
         // Reserved - Yellow LED on
-        statusElement.textContent = 'Reserved';
+        statusElement.textContent = carNumber ? `Reserved (${carNumber})` : 'Reserved';
         statusElement.className = 'slot-status reserved';
         yellowLed.classList.add('on');
         card.style.borderTop = '4px solid var(--reserved)';
@@ -423,17 +423,21 @@
         card.style.borderTop = '4px solid var(--available)';
       }
 
-      // Update timestamp
       document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
     // Listen for real-time Firebase updates
-    database.ref('slot1').on('value', (snapshot) => updateSlot(1, snapshot.val()));
-    database.ref('slot2').on('value', (snapshot) => updateSlot(2, snapshot.val()));
-    database.ref('slot3').on('value', (snapshot) => updateSlot(3, snapshot.val()));
-    database.ref('slot4').on('value', (snapshot) => updateSlot(4, snapshot.val()));
+    database.ref('parkingStatus').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        updateSlot(1, data.slot1, data.car1 || "");
+        updateSlot(2, data.slot2, data.car2 || "");
+        updateSlot(3, data.slot3, data.car3 || "");
+        updateSlot(4, data.slot4, data.car4 || "");
+      }
+    });
 
-    // Handle message form submission
+    // Handle message form submission via Firebase
     document.getElementById('message-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message').value.trim();
@@ -443,27 +447,52 @@
       responseDiv.style.display = 'block';
       responseDiv.style.backgroundColor = '#ddd';
       responseDiv.style.color = '#333';
-      responseDiv.textContent = 'Sending...';
-
-      const hideLater = () => {
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 3000);
-      };
+      responseDiv.textContent = 'Sending reservation request...';
 
       try {
-        // For GitHub Pages, we can't directly send to ESP32
-        // This would need to be handled differently (maybe through Firebase functions)
-        responseDiv.style.backgroundColor = '#F44336';
+        // Validate message format
+        const commaIndex = message.indexOf(',');
+        if (commaIndex === -1) {
+          throw new Error('Invalid format. Use: slot,carNumber (e.g., 1,DHK-202326)');
+        }
+
+        const slotNum = parseInt(message.substring(0, commaIndex));
+        const carNumber = message.substring(commaIndex + 1).trim();
+
+        if (slotNum < 1 || slotNum > 4) {
+          throw new Error('Slot number must be between 1-4');
+        }
+
+        if (carNumber.length < 2) {
+          throw new Error('Car number is required');
+        }
+
+        // Send reservation request to Firebase
+        await database.ref('/reservationRequests').push({
+          slot: slotNum,
+          carNumber: carNumber,
+          timestamp: Date.now(),
+          status: 'pending'
+        });
+
+        responseDiv.style.backgroundColor = '#4CAF50';
         responseDiv.style.color = 'white';
-        responseDiv.textContent = '❌ Message sending not configured for GitHub Pages. Use local ESP32 interface instead.';
-        hideLater();
-        
+        responseDiv.textContent = '✅ Reservation request sent! ESP32 will process it.';
+        document.getElementById('message').value = '';
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          responseDiv.style.display = 'none';
+        }, 5000);
+
       } catch (err) {
         responseDiv.style.backgroundColor = '#F44336';
         responseDiv.style.color = 'white';
-        responseDiv.textContent = '❌ Error: ' + err.message;
-        hideLater();
+        responseDiv.textContent = '❌ ' + err.message;
+        
+        setTimeout(() => {
+          responseDiv.style.display = 'none';
+        }, 5000);
       }
     });
   </script>
