@@ -378,7 +378,7 @@
     <div id="form-response"></div>
   </div>
 
-  <script>
+ <script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
@@ -426,14 +426,11 @@
       document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
-    // Listen for real-time Firebase updates
+    // Listen for real-time Firebase updates - FIXED VERSION
     database.ref('parkingStatus').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        console.log("Firebase data received:", data);
-        
-        // Use the same logic as ESP32 to determine status
-        // ESP32 logic: occupied if sensor detects car, reserved if car number assigned but no car
+        // Determine status based on both slot value and car number
         const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
         const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
         const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
@@ -446,40 +443,8 @@
       }
     });
 
-    // Monitor reservation request status
-    database.ref('reservationRequest/status').on('value', (snapshot) => {
-      const status = snapshot.val();
-      if (status === 'accepted' || status === 'rejected') {
-        const responseDiv = document.getElementById('form-response');
-        responseDiv.style.display = 'block';
-        
-        if (status === 'accepted') {
-          responseDiv.style.backgroundColor = '#4CAF50';
-          responseDiv.style.color = 'white';
-          responseDiv.textContent = '✅ Reservation accepted by ESP32!';
-        } else {
-          database.ref('reservationRequest/message').once('value', (msgSnapshot) => {
-            const message = msgSnapshot.val() || 'Reservation rejected';
-            responseDiv.style.backgroundColor = '#F44336';
-            responseDiv.style.color = 'white';
-            responseDiv.textContent = '❌ ' + message;
-          });
-        }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 5000);
-        
-        // Reset the status
-        setTimeout(() => {
-          database.ref('reservationRequest/status').set('pending');
-        }, 6000);
-      }
-    });
-
     // Handle message form submission via Firebase
-    document.getElementById('message-form').addEventListener('submit', async (event) => {
+     document.getElementById('message-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message').value.trim();
       if (!message) return;
@@ -508,19 +473,23 @@
           throw new Error('Car number is required');
         }
 
-        // Send reservation request to Firebase
+        // Send reservation request to Firebase - SIMPLIFIED APPROACH
         await database.ref('/reservationRequest').set({
           slot: slotNum,
           carNumber: carNumber,
           timestamp: Date.now(),
-          status: 'pending',
-          message: ''
+          status: 'pending'
         });
 
-        responseDiv.style.backgroundColor = '#2196F3';
+        responseDiv.style.backgroundColor = '#4CAF50';
         responseDiv.style.color = 'white';
-        responseDiv.textContent = '⏳ Reservation request sent! Waiting for ESP32 response...';
+        responseDiv.textContent = '✅ Reservation request sent! ESP32 will process it.';
         document.getElementById('message').value = '';
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          responseDiv.style.display = 'none';
+        }, 3000);
 
       } catch (err) {
         responseDiv.style.backgroundColor = '#F44336';
@@ -532,6 +501,6 @@
         }, 3000);
       }
     });
-  </script>
+</script>
 </body>
 </html>
