@@ -4,162 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
     :root {
       --available: #4CAF50;
       --occupied: #F44336;
       --reserved: #FFC107;
       --background: #f5f5f5;
-      --card-bg: #ffffff;
-      --text: #333333;
-      --led-off: #dddddd;
-      --slot-height: 220px;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       background-color: var(--background);
       margin: 0;
       padding: 20px;
-      color: var(--text);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: linear-gradient(135deg, #2c3e50, #3498db);
-      color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     h1 {
-      margin: 0;
-      font-size: 2.2rem;
+      text-align: center;
+      margin-bottom: 20px;
     }
 
-    .subtitle {
-      font-weight: normal;
-      opacity: 0.9;
-    }
-
-    .dashboard {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
     }
 
-    .parking-slot {
-      background-color: var(--card-bg);
-      border-radius: 10px;
+    .card {
+      background: white;
+      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      height: var(--slot-height);
-      display: flex;
-      flex-direction: column;
-      border-top: 4px solid transparent;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: 0.3s;
+      border-top: 6px solid transparent;
     }
 
-    .parking-slot:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    .card.available {
+      border-top: 6px solid var(--available);
     }
 
-    .slot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
+    .card.occupied {
+      border-top: 6px solid var(--occupied);
     }
 
-    .slot-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .slot-status {
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: white;
-    }
-
-    .available {
-      background-color: var(--available);
-    }
-
-    .occupied {
-      background-color: var(--occupied);
-    }
-
-    .reserved {
-      background-color: var(--reserved);
-    }
-
-    .led-panel {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: auto 0;
+    .card.reserved {
+      border-top: 6px solid var(--reserved);
     }
 
     .led {
-      width: 40px;
-      height: 40px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      position: relative;
-      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .led::after {
-      content: '';
-      position: absolute;
-      top: 5%;
-      left: 10%;
-      width: 80%;
-      height: 80%;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), transparent);
-      opacity: 0;
-    }
-
-    .led.on::after {
-      opacity: 0.4;
-    }
-
-    .led-red {
-      background-color: var(--led-off);
-      border: 2px solid #cc0000;
-    }
-
-    .led-red.on {
-      background-color: var(--occupied);
-      box-shadow: 0 0 15px rgba(244, 67, 54, 0.7);
-    }
-
-    .led-yellow {
-      background-color: var(--led-off);
-      border: 2px solid #cc9900;
-    }
-
-    .led-yellow.on {
-      background-color: var(--reserved);
-      box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
-    }
-
-    .led-green {
-      background-color: var(--led-off);
-      border: 2px solid #009900;
+      display: inline-block;
+      margin: 5px;
+      background: #ccc;
     }
 
     .led-green.on {
@@ -167,340 +66,64 @@
       box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
     }
 
-    .led-label {
-      text-align: center;
-      font-size: 0.8rem;
-      margin-top: 5px;
-      color: #666;
+    .led-red.on {
+      background-color: var(--occupied);
+      box-shadow: 0 0 15px rgba(244, 67, 54, 0.7);
     }
 
-    .led-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .last-updated {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 0.9rem;
-      color: #777;
-    }
-
-    /* Message Form Styles */
-    .form-container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-container h2 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
-
-    .form-container label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .form-container input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      margin-bottom: 15px;
-      box-sizing: border-box;
-    }
-
-    .form-container button {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .form-container button:hover {
-      background: #2980b9;
-    }
-
-    #form-response {
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 4px;
-      display: none;
-      font-weight: 500;
-    }
-
-    @media (max-width: 600px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
-
-      .header {
-        padding: 15px;
-      }
-
-      h1 {
-        font-size: 1.8rem;
-      }
-
-      .led {
-        width: 30px;
-        height: 30px;
-      }
-
-      :root {
-        --slot-height: 200px;
-      }
-
-      .form-container {
-        margin: 20px auto;
-        padding: 15px;
-      }
+    .led-yellow.on {
+      background-color: var(--reserved);
+      box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Smart Parking System <span class="subtitle">Live Monitoring Panel</span></h1>
-  </div>
-
-  <div class="dashboard">
-    <div class="parking-slot" id="slot1-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 1</h2>
-        <span class="slot-status" id="slot1-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot1-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot1-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot1-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
+  <h1>Smart Parking System</h1>
+  <div class="grid">
+    <div class="card available" id="slot1">
+      <h2>Slot 1</h2>
+      <div class="led led-green" id="slot1-green"></div>
+      <div class="led led-red" id="slot1-red"></div>
+      <div class="led led-yellow" id="slot1-yellow"></div>
     </div>
 
-    <div class="parking-slot" id="slot2-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 2</h2>
-        <span class="slot-status" id="slot2-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot2-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot2-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot2-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
+    <div class="card reserved" id="slot2">
+      <h2>Slot 2</h2>
+      <div class="led led-green" id="slot2-green"></div>
+      <div class="led led-red" id="slot2-red"></div>
+      <div class="led led-yellow" id="slot2-yellow"></div>
     </div>
 
-    <div class="parking-slot" id="slot3-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 3</h2>
-        <span class="slot-status" id="slot3-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot3-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot3-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot3-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="parking-slot" id="slot4-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 4</h2>
-        <span class="slot-status" id="slot4-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot4-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot4-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot4-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
+    <div class="card occupied" id="slot3">
+      <h2>Slot 3</h2>
+      <div class="led led-green" id="slot3-green"></div>
+      <div class="led led-red" id="slot3-red"></div>
+      <div class="led led-yellow" id="slot3-yellow"></div>
     </div>
   </div>
 
-  <div class="last-updated" id="last-updated">
-    Last updated: <span id="update-time">Never</span>
-  </div>
+  <script>
+    function updateSlot(slotId, status) {
+      const slot = document.getElementById(slotId);
+      slot.classList.remove('available', 'occupied', 'reserved');
+      slot.classList.add(status);
 
-  <div class="form-container">
-    <h2>Send Reservation Request</h2>
-    <form id="message-form">
-      <div>
-        <label for="message">Message (Slot,CarNumber):</label>
-        <input type="text" id="message" name="message" required placeholder="e.g. 1,DHK-202326" />
-      </div>
-      <button type="submit">Send Reservation</button>
-    </form>
-    <div id="form-response"></div>
-  </div>
+      slot.querySelector('.led-green').classList.remove('on');
+      slot.querySelector('.led-red').classList.remove('on');
+      slot.querySelector('.led-yellow').classList.remove('on');
 
- <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
-      databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
-      projectId: "ledcontrol-a41fb"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    function updateSlot(slotNum, status, carNumber = "") {
-      const statusElement = document.getElementById(`slot${slotNum}-status`);
-      const redLed = document.getElementById(`slot${slotNum}-red`);
-      const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
-      const greenLed = document.getElementById(`slot${slotNum}-green`);
-      const card = document.getElementById(`slot${slotNum}-card`);
-
-      // Reset all LEDs and borders
-      redLed.classList.remove('on');
-      yellowLed.classList.remove('on');
-      greenLed.classList.remove('on');
-      card.style.borderTop = '4px solid transparent';
-
-      if (status === 1) {
-        // Occupied - Red LED on
-        statusElement.textContent = carNumber ? `Occupied (${carNumber})` : 'Occupied';
-        statusElement.className = 'slot-status occupied';
-        redLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--occupied)';
-      } else if (status === 2) {
-        // Reserved - Yellow LED on
-        statusElement.textContent = carNumber ? `Reserved (${carNumber})` : 'Reserved';
-        statusElement.className = 'slot-status reserved';
-        yellowLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--reserved)';
-      } else {
-        // Available - Green LED on
-        statusElement.textContent = 'Available';
-        statusElement.className = 'slot-status available';
-        greenLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--available)';
+      if (status === 'available') {
+        slot.querySelector('.led-green').classList.add('on');
+      } else if (status === 'occupied') {
+        slot.querySelector('.led-red').classList.add('on');
+      } else if (status === 'reserved') {
+        slot.querySelector('.led-yellow').classList.add('on');
       }
-
-      document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
-    // Listen for real-time Firebase updates - FIXED VERSION
-    database.ref('parkingStatus').on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Determine status based on both slot value and car number
-        const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
-        const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
-        const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
-        const status4 = data.slot4 === 1 ? 1 : (data.car4 && data.car4 !== "" ? 2 : 0);
-        
-        updateSlot(1, status1, data.car1 || "");
-        updateSlot(2, status2, data.car2 || "");
-        updateSlot(3, status3, data.car3 || "");
-        updateSlot(4, status4, data.car4 || "");
-      }
-    });
-
-    // Handle message form submission via Firebase
-     document.getElementById('message-form').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const message = document.getElementById('message').value.trim();
-      if (!message) return;
-
-      const responseDiv = document.getElementById('form-response');
-      responseDiv.style.display = 'block';
-      responseDiv.style.backgroundColor = '#ddd';
-      responseDiv.style.color = '#333';
-      responseDiv.textContent = 'Sending reservation request...';
-
-      try {
-        // Validate message format
-        const commaIndex = message.indexOf(',');
-        if (commaIndex === -1) {
-          throw new Error('Invalid format. Use: slot,carNumber (e.g., 1,DHK-202326)');
-        }
-
-        const slotNum = parseInt(message.substring(0, commaIndex));
-        const carNumber = message.substring(commaIndex + 1).trim();
-
-        if (slotNum < 1 || slotNum > 4) {
-          throw new Error('Slot number must be between 1-4');
-        }
-
-        if (carNumber.length < 2) {
-          throw new Error('Car number is required');
-        }
-
-        // Send reservation request to Firebase - SIMPLIFIED APPROACH
-        await database.ref('/reservationRequest').set({
-          slot: slotNum,
-          carNumber: carNumber,
-          timestamp: Date.now(),
-          status: 'pending'
-        });
-
-        responseDiv.style.backgroundColor = '#4CAF50';
-        responseDiv.style.color = 'white';
-        responseDiv.textContent = '✅ Reservation request sent! ESP32 will process it.';
-        document.getElementById('message').value = '';
-
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 3000);
-
-      } catch (err) {
-        responseDiv.style.backgroundColor = '#F44336';
-        responseDiv.style.color = 'white';
-        responseDiv.textContent = '❌ ' + err.message;
-        
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 3000);
-      }
-    });
-</script>
+    updateSlot('slot1', 'available');
+    updateSlot('slot2', 'reserved');
+    updateSlot('slot3', 'occupied');
+  </script>
 </body>
 </html>
