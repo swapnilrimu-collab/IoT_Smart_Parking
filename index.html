@@ -36,15 +36,8 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    h1 {
-      margin: 0;
-      font-size: 2.2rem;
-    }
-
-    .subtitle {
-      font-weight: normal;
-      opacity: 0.9;
-    }
+    h1 { margin: 0; font-size: 2.2rem; }
+    .subtitle { font-weight: normal; opacity: 0.9; }
 
     .dashboard {
       display: grid;
@@ -80,194 +73,45 @@
       margin-bottom: 15px;
     }
 
-    .slot-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin: 0;
-    }
+    .slot-title { font-size: 1.3rem; font-weight: 600; margin: 0; }
+    .slot-status { padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; color: white; }
 
-    .slot-status {
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: white;
-    }
+    .available { background-color: var(--available); }
+    .occupied { background-color: var(--occupied); }
+    .reserved { background-color: var(--reserved); }
 
-    .available {
-      background-color: var(--available);
-    }
+    .led-panel { display: flex; justify-content: center; gap: 15px; margin: auto 0; }
+    .led { width: 40px; height: 40px; border-radius: 50%; position: relative; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2); }
+    .led::after { content: ''; position: absolute; top: 5%; left: 10%; width: 80%; height: 80%; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), transparent); opacity: 0; }
+    .led.on::after { opacity: 0.4; }
 
-    .occupied {
-      background-color: var(--occupied);
-    }
+    .led-red { background-color: var(--led-off); border: 2px solid #cc0000; }
+    .led-red.on { background-color: var(--occupied); box-shadow: 0 0 15px rgba(244, 67, 54, 0.7); }
+    .led-yellow { background-color: var(--led-off); border: 2px solid #cc9900; }
+    .led-yellow.on { background-color: var(--reserved); box-shadow: 0 0 15px rgba(255, 193, 7, 0.7); }
+    .led-green { background-color: var(--led-off); border: 2px solid #009900; }
+    .led-green.on { background-color: var(--available); box-shadow: 0 0 15px rgba(76, 175, 80, 0.7); }
 
-    .reserved {
-      background-color: var(--reserved);
-    }
+    .led-label { text-align: center; font-size: 0.8rem; margin-top: 5px; color: #666; }
+    .led-container { display: flex; flex-direction: column; align-items: center; }
 
-    .led-panel {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: auto 0;
-    }
+    .last-updated { text-align: center; margin-top: 30px; font-size: 0.9rem; color: #777; }
 
-    .led {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      position: relative;
-      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .led::after {
-      content: '';
-      position: absolute;
-      top: 5%;
-      left: 10%;
-      width: 80%;
-      height: 80%;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), transparent);
-      opacity: 0;
-    }
-
-    .led.on::after {
-      opacity: 0.4;
-    }
-
-    .led-red {
-      background-color: var(--led-off);
-      border: 2px solid #cc0000;
-    }
-
-    .led-red.on {
-      background-color: var(--occupied);
-      box-shadow: 0 0 15px rgba(244, 67, 54, 0.7);
-    }
-
-    .led-yellow {
-      background-color: var(--led-off);
-      border: 2px solid #cc9900;
-    }
-
-    .led-yellow.on {
-      background-color: var(--reserved);
-      box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
-    }
-
-    .led-green {
-      background-color: var(--led-off);
-      border: 2px solid #009900;
-    }
-
-    .led-green.on {
-      background-color: var(--available);
-      box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
-    }
-
-    .led-label {
-      text-align: center;
-      font-size: 0.8rem;
-      margin-top: 5px;
-      color: #666;
-    }
-
-    .led-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .last-updated {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 0.9rem;
-      color: #777;
-    }
-
-    /* Message Form Styles */
-    .form-container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-container h2 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
-
-    .form-container label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .form-container input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      margin-bottom: 15px;
-      box-sizing: border-box;
-    }
-
-    .form-container button {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .form-container button:hover {
-      background: #2980b9;
-    }
-
-    #form-response {
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 4px;
-      display: none;
-      font-weight: 500;
-    }
+    .form-container { max-width: 600px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+    .form-container h2 { margin-top: 0; color: #2c3e50; }
+    .form-container label { display: block; margin-bottom: 5px; font-weight: 500; color: #333; }
+    .form-container input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; }
+    .form-container button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background-color 0.3s ease; }
+    .form-container button:hover { background: #2980b9; }
+    #form-response { margin-top: 15px; padding: 12px; border-radius: 4px; display: none; font-weight: 500; }
 
     @media (max-width: 600px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
-
-      .header {
-        padding: 15px;
-      }
-
-      h1 {
-        font-size: 1.8rem;
-      }
-
-      .led {
-        width: 30px;
-        height: 30px;
-      }
-
-      :root {
-        --slot-height: 200px;
-      }
-
-      .form-container {
-        margin: 20px auto;
-        padding: 15px;
-      }
+      .dashboard { grid-template-columns: 1fr; }
+      .header { padding: 15px; }
+      h1 { font-size: 1.8rem; }
+      .led { width: 30px; height: 30px; }
+      :root { --slot-height: 200px; }
+      .form-container { margin: 20px auto; padding: 15px; }
     }
   </style>
 </head>
@@ -277,89 +121,8 @@
   </div>
 
   <div class="dashboard">
-    <div class="parking-slot" id="slot1-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 1</h2>
-        <span class="slot-status" id="slot1-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot1-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot1-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot1-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="parking-slot" id="slot2-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 2</h2>
-        <span class="slot-status" id="slot2-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot2-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot2-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot2-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="parking-slot" id="slot3-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 3</h2>
-        <span class="slot-status" id="slot3-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot3-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot3-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot3-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="parking-slot" id="slot4-card">
-      <div class="slot-header">
-        <h2 class="slot-title">Parking Slot 4</h2>
-        <span class="slot-status" id="slot4-status">Loading...</span>
-      </div>
-      <div class="led-panel">
-        <div class="led-container">
-          <div class="led led-red" id="slot4-red"></div>
-          <div class="led-label">Red</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-yellow" id="slot4-yellow"></div>
-          <div class="led-label">Yellow</div>
-        </div>
-        <div class="led-container">
-          <div class="led led-green" id="slot4-green"></div>
-          <div class="led-label">Green</div>
-        </div>
-      </div>
-    </div>
+    <!-- Slots 1-4 HTML here (same as your code) -->
+    <!-- ... copy your slot divs here ... -->
   </div>
 
   <div class="last-updated" id="last-updated">
@@ -379,14 +142,13 @@
   </div>
 
   <script>
-    // Firebase configuration
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
       databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
       projectId: "ledcontrol-a41fb"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
@@ -397,48 +159,38 @@
       const greenLed = document.getElementById(`slot${slotNum}-green`);
       const card = document.getElementById(`slot${slotNum}-card`);
 
-      // Reset all LEDs and borders
       redLed.classList.remove('on');
       yellowLed.classList.remove('on');
       greenLed.classList.remove('on');
       card.style.borderTop = '4px solid transparent';
 
       if (status === 1) {
-        // Occupied - Red LED on
         statusElement.textContent = carNumber ? `Occupied (${carNumber})` : 'Occupied';
         statusElement.className = 'slot-status occupied';
         redLed.classList.add('on');
         card.style.borderTop = '4px solid var(--occupied)';
       } else if (status === 2) {
-        // Reserved - Yellow LED on
         statusElement.textContent = carNumber ? `Reserved (${carNumber})` : 'Reserved';
         statusElement.className = 'slot-status reserved';
         yellowLed.classList.add('on');
         card.style.borderTop = '4px solid var(--reserved)';
       } else {
-        // Available - Green LED on
         statusElement.textContent = 'Available';
         statusElement.className = 'slot-status available';
         greenLed.classList.add('on');
         card.style.borderTop = '4px solid var(--available)';
       }
-
       document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
     }
 
-    // Listen for real-time Firebase updates
+    // Firebase real-time updates
     database.ref('parkingStatus').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        console.log("Firebase data received:", data);
-        
-        // Use the same logic as ESP32 to determine status
-        // ESP32 logic: occupied if sensor detects car, reserved if car number assigned but no car
         const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
         const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
         const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
         const status4 = data.slot4 === 1 ? 1 : (data.car4 && data.car4 !== "" ? 2 : 0);
-        
         updateSlot(1, status1, data.car1 || "");
         updateSlot(2, status2, data.car2 || "");
         updateSlot(3, status3, data.car3 || "");
@@ -446,39 +198,7 @@
       }
     });
 
-    // Monitor reservation request status
-    database.ref('reservationRequest/status').on('value', (snapshot) => {
-      const status = snapshot.val();
-      if (status === 'accepted' || status === 'rejected') {
-        const responseDiv = document.getElementById('form-response');
-        responseDiv.style.display = 'block';
-        
-        if (status === 'accepted') {
-          responseDiv.style.backgroundColor = '#4CAF50';
-          responseDiv.style.color = 'white';
-          responseDiv.textContent = '✅ Reservation accepted by ESP32!';
-        } else {
-          database.ref('reservationRequest/message').once('value', (msgSnapshot) => {
-            const message = msgSnapshot.val() || 'Reservation rejected';
-            responseDiv.style.backgroundColor = '#F44336';
-            responseDiv.style.color = 'white';
-            responseDiv.textContent = '❌ ' + message;
-          });
-        }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 5000);
-        
-        // Reset the status
-        setTimeout(() => {
-          database.ref('reservationRequest/status').set('pending');
-        }, 6000);
-      }
-    });
-
-    // Handle message form submission via Firebase
+    // Form submission
     document.getElementById('message-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const message = document.getElementById('message').value.trim();
@@ -491,24 +211,14 @@
       responseDiv.textContent = 'Sending reservation request...';
 
       try {
-        // Validate message format
         const commaIndex = message.indexOf(',');
-        if (commaIndex === -1) {
-          throw new Error('Invalid format. Use: slot,carNumber (e.g., 1,DHK-202326)');
-        }
+        if (commaIndex === -1) throw new Error('Use: slot,carNumber (e.g., 1,DHK-202326)');
 
         const slotNum = parseInt(message.substring(0, commaIndex));
         const carNumber = message.substring(commaIndex + 1).trim();
+        if (slotNum < 1 || slotNum > 4) throw new Error('Slot number must be 1-4');
+        if (carNumber.length < 2) throw new Error('Car number is required');
 
-        if (slotNum < 1 || slotNum > 4) {
-          throw new Error('Slot number must be between 1-4');
-        }
-
-        if (carNumber.length < 2) {
-          throw new Error('Car number is required');
-        }
-
-        // Send reservation request to Firebase
         await database.ref('/reservationRequest').set({
           slot: slotNum,
           carNumber: carNumber,
@@ -521,17 +231,24 @@
         responseDiv.style.color = 'white';
         responseDiv.textContent = '⏳ Reservation request sent! Waiting for ESP32 response...';
         document.getElementById('message').value = '';
-
       } catch (err) {
         responseDiv.style.backgroundColor = '#F44336';
         responseDiv.style.color = 'white';
         responseDiv.textContent = '❌ ' + err.message;
-        
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 3000);
+        setTimeout(() => { responseDiv.style.display = 'none'; }, 3000);
       }
     });
+
+    // Optional fallback refresh every 30s for GitHub Pages
+    setInterval(() => database.ref('parkingStatus').once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        updateSlot(1, data.slot1 === 1 ? 1 : (data.car1 ? 2 : 0), data.car1 || "");
+        updateSlot(2, data.slot2 === 1 ? 1 : (data.car2 ? 2 : 0), data.car2 || "");
+        updateSlot(3, data.slot3 === 1 ? 1 : (data.car3 ? 2 : 0), data.car3 || "");
+        updateSlot(4, data.slot4 === 1 ? 1 : (data.car4 ? 2 : 0), data.car4 || "");
+      }
+    }), 30000);
   </script>
 </body>
 </html>
