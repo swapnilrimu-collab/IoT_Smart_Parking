@@ -1,140 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .dashboard { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
-    .parking-slot { background: white; border-radius: 10px; padding: 20px; position: relative; height: 220px; border-top: 4px solid transparent; }
-    .slot-title { font-size: 1.2rem; margin:0; }
-    .slot-status { position: absolute; top: 10px; right: 10px; padding: 5px 10px; border-radius: 20px; color: white; font-weight: bold; }
-    .available { background-color: #4CAF50; }
-    .occupied { background-color: #F44336; }
-    .reserved { background-color: #FFC107; }
-    .led-panel { display: flex; justify-content: center; gap: 15px; margin-top: 40px; }
-    .led { width: 40px; height: 40px; border-radius: 50%; background: #ddd; border: 2px solid #aaa; }
-    .led.on { box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-    .led-red.on { background: #F44336; }
-    .led-yellow.on { background: #FFC107; }
-    .led-green.on { background: #4CAF50; }
-    .billing-popup { position: fixed; top: 20px; right: 20px; background: #2196F3; color: white; padding: 20px; border-radius: 10px; display: none; font-size: 1.2rem; z-index: 999; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Parking System</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+  .header { text-align: center; margin-bottom: 20px; }
+  h1 { margin:0; }
+  .dashboard { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; max-width:1200px; margin:0 auto; }
+  .parking-slot { background:white; border-radius:10px; padding:20px; position:relative; height:220px; border-top:4px solid transparent; }
+  .slot-title { font-size:1.2rem; margin:0; }
+  .slot-status { position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:white; font-weight:bold; }
+  .available { background-color: #4CAF50; }
+  .occupied { background-color: #F44336; }
+  .reserved { background-color: #FFC107; }
+  .led-panel { display:flex; justify-content:center; gap:15px; margin-top:40px; }
+  .led { width:40px; height:40px; border-radius:50%; background:#ddd; border:2px solid #aaa; }
+  .led.on { box-shadow:0 0 15px rgba(0,0,0,0.5); }
+  .led-red.on { background:#F44336; }
+  .led-yellow.on { background:#FFC107; }
+  .led-green.on { background:#4CAF50; }
+  .billing-popup { position: fixed; top:20px; right:20px; background:#2196F3; color:white; padding:20px; border-radius:10px; display:none; font-size:1.2rem; z-index:999; box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+  .form-container { max-width:600px; margin:40px auto; padding:20px; background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+  .form-container input, .form-container button { width:100%; padding:12px; margin-bottom:10px; border-radius:4px; border:1px solid #ddd; font-size:16px; box-sizing:border-box; }
+  .form-container button { background:#3498db; color:white; border:none; cursor:pointer; }
+  .form-container button:hover { background:#2980b9; }
+  #form-response { display:none; padding:10px; border-radius:4px; font-weight:bold; margin-top:5px; }
+</style>
 </head>
 <body>
-  <div class="header">
-    <h1>Smart Parking System</h1>
-  </div>
 
-  <div class="dashboard">
-    <div class="parking-slot" id="slot1-card">
-      <div class="slot-title">Slot 1</div>
-      <div class="slot-status" id="slot1-status">Loading...</div>
-      <div class="led-panel">
-        <div class="led led-red" id="slot1-red"></div>
-        <div class="led led-yellow" id="slot1-yellow"></div>
-        <div class="led led-green" id="slot1-green"></div>
-      </div>
-    </div>
-    <div class="parking-slot" id="slot2-card">
-      <div class="slot-title">Slot 2</div>
-      <div class="slot-status" id="slot2-status">Loading...</div>
-      <div class="led-panel">
-        <div class="led led-red" id="slot2-red"></div>
-        <div class="led led-yellow" id="slot2-yellow"></div>
-        <div class="led led-green" id="slot2-green"></div>
-      </div>
-    </div>
-    <div class="parking-slot" id="slot3-card">
-      <div class="slot-title">Slot 3</div>
-      <div class="slot-status" id="slot3-status">Loading...</div>
-      <div class="led-panel">
-        <div class="led led-red" id="slot3-red"></div>
-        <div class="led led-yellow" id="slot3-yellow"></div>
-        <div class="led led-green" id="slot3-green"></div>
-      </div>
-    </div>
-    <div class="parking-slot" id="slot4-card">
-      <div class="slot-title">Slot 4</div>
-      <div class="slot-status" id="slot4-status">Loading...</div>
-      <div class="led-panel">
-        <div class="led led-red" id="slot4-red"></div>
-        <div class="led led-yellow" id="slot4-yellow"></div>
-        <div class="led led-green" id="slot4-green"></div>
-      </div>
+<div class="header">
+  <h1>Smart Parking System</h1>
+</div>
+
+<div class="dashboard">
+  <!-- Slot 1 -->
+  <div class="parking-slot" id="slot1-card">
+    <div class="slot-title">Slot 1</div>
+    <div class="slot-status" id="slot1-status">Loading...</div>
+    <div class="led-panel">
+      <div class="led led-red" id="slot1-red"></div>
+      <div class="led led-yellow" id="slot1-yellow"></div>
+      <div class="led led-green" id="slot1-green"></div>
     </div>
   </div>
+  <!-- Slot 2 -->
+  <div class="parking-slot" id="slot2-card">
+    <div class="slot-title">Slot 2</div>
+    <div class="slot-status" id="slot2-status">Loading...</div>
+    <div class="led-panel">
+      <div class="led led-red" id="slot2-red"></div>
+      <div class="led led-yellow" id="slot2-yellow"></div>
+      <div class="led led-green" id="slot2-green"></div>
+    </div>
+  </div>
+  <!-- Slot 3 -->
+  <div class="parking-slot" id="slot3-card">
+    <div class="slot-title">Slot 3</div>
+    <div class="slot-status" id="slot3-status">Loading...</div>
+    <div class="led-panel">
+      <div class="led led-red" id="slot3-red"></div>
+      <div class="led led-yellow" id="slot3-yellow"></div>
+      <div class="led led-green" id="slot3-green"></div>
+    </div>
+  </div>
+  <!-- Slot 4 -->
+  <div class="parking-slot" id="slot4-card">
+    <div class="slot-title">Slot 4</div>
+    <div class="slot-status" id="slot4-status">Loading...</div>
+    <div class="led-panel">
+      <div class="led led-red" id="slot4-red"></div>
+      <div class="led led-yellow" id="slot4-yellow"></div>
+      <div class="led led-green" id="slot4-green"></div>
+    </div>
+  </div>
+</div>
 
-  <div class="billing-popup" id="billing-popup"></div>
+<!-- Billing popup -->
+<div class="billing-popup" id="billing-popup"></div>
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
-      databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
-      projectId: "ledcontrol-a41fb"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<!-- Reservation form -->
+<div class="form-container">
+  <h2>Send Reservation Request</h2>
+  <input type="text" id="message" placeholder="Slot,CarNumber e.g. 1,DHK-202326">
+  <button id="send-btn">Send Reservation</button>
+  <div id="form-response"></div>
+</div>
 
-    function updateSlot(slotNum, status) {
-      const statusEl = document.getElementById(`slot${slotNum}-status`);
-      const red = document.getElementById(`slot${slotNum}-red`);
-      const yellow = document.getElementById(`slot${slotNum}-yellow`);
-      const green = document.getElementById(`slot${slotNum}-green`);
-      const card = document.getElementById(`slot${slotNum}-card`);
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
+    databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
+    projectId: "ledcontrol-a41fb"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-      // reset LEDs and border
-      red.classList.remove('on');
-      yellow.classList.remove('on');
-      green.classList.remove('on');
-      card.style.borderTop = '4px solid transparent';
+  // Update slot UI
+  function updateSlot(slotNum, status) {
+    const statusEl = document.getElementById(`slot${slotNum}-status`);
+    const red = document.getElementById(`slot${slotNum}-red`);
+    const yellow = document.getElementById(`slot${slotNum}-yellow`);
+    const green = document.getElementById(`slot${slotNum}-green`);
+    const card = document.getElementById(`slot${slotNum}-card`);
+    red.classList.remove('on'); yellow.classList.remove('on'); green.classList.remove('on'); card.style.borderTop='4px solid transparent';
+    if(status===1){statusEl.textContent='Occupied'; statusEl.className='slot-status occupied'; red.classList.add('on'); card.style.borderTop='4px solid #F44336';}
+    else if(status===2){statusEl.textContent='Reserved'; statusEl.className='slot-status reserved'; yellow.classList.add('on'); card.style.borderTop='4px solid #FFC107';}
+    else {statusEl.textContent='Available'; statusEl.className='slot-status available'; green.classList.add('on'); card.style.borderTop='4px solid #4CAF50';}
+  }
 
-      if(status === 1){ // Occupied
-        statusEl.textContent = 'Occupied';
-        statusEl.className = 'slot-status occupied';
-        red.classList.add('on');
-        card.style.borderTop = '4px solid #F44336';
-      } else if(status === 2){ // Reserved
-        statusEl.textContent = 'Reserved';
-        statusEl.className = 'slot-status reserved';
-        yellow.classList.add('on');
-        card.style.borderTop = '4px solid #FFC107';
-      } else { // Available
-        statusEl.textContent = 'Available';
-        statusEl.className = 'slot-status available';
-        green.classList.add('on');
-        card.style.borderTop = '4px solid #4CAF50';
-      }
-    }
+  // Listen parking status
+  db.ref('parkingStatus').on('value', snapshot=>{
+    const data = snapshot.val(); if(!data) return;
+    const s1=data.slot1===1?1:0;
+    const s2=data.slot2===1?1:0;
+    const s3=data.slot3===1?1:0;
+    const s4=data.slot4===1?1:0;
+    updateSlot(1,s1); updateSlot(2,s2); updateSlot(3,s3); updateSlot(4,s4);
+  });
 
-    // Listen for parking status
-    db.ref('parkingStatus').on('value', snapshot => {
-      const data = snapshot.val();
-      if(!data) return;
-      const s1 = data.slot1 === 1 ? 1 : 0;
-      const s2 = data.slot2 === 1 ? 1 : 0;
-      const s3 = data.slot3 === 1 ? 1 : 0;
-      const s4 = data.slot4 === 1 ? 1 : 0;
-      updateSlot(1, s1);
-      updateSlot(2, s2);
-      updateSlot(3, s3);
-      updateSlot(4, s4);
-    });
+  // Billing popup
+  db.ref('bills').on('child_added', snapshot=>{
+    const bill = snapshot.val(); if(!bill || !bill.amount) return;
+    const popup = document.getElementById('billing-popup');
+    popup.textContent = `💰 Bill Amount: ${bill.amount} BDT`;
+    popup.style.display='block';
+    setTimeout(()=>{popup.style.display='none';},5000);
+  });
 
-    // Listen for new bills
-    db.ref('bills').on('child_added', snapshot => {
-      const bill = snapshot.val();
-      if(!bill || !bill.amount) return;
-      const popup = document.getElementById('billing-popup');
-      popup.textContent = `💰 Bill Amount: ${bill.amount} BDT`;
-      popup.style.display = 'block';
-      setTimeout(()=>{ popup.style.display='none'; }, 5000);
-    });
-  </script>
+  // Reservation request
+  document.getElementById('send-btn').addEventListener('click', ()=>{
+    const msg = document.getElementById('message').value.trim();
+    const resp = document.getElementById('form-response');
+    if(!msg){resp.style.display='block'; resp.textContent='Enter slot and car number!'; return;}
+    const comma = msg.indexOf(',');
+    if(comma===-1){resp.style.display='block'; resp.textContent='Format: slot,CarNumber'; return;}
+    const slotNum=parseInt(msg.substring(0,comma));
+    const carNum=msg.substring(comma+1).trim();
+    if(slotNum<1||slotNum>4){resp.style.display='block'; resp.textContent='Slot must be 1-4'; return;}
+    db.ref('/reservationRequest').set({slot:slotNum, carNumber:carNum, timestamp:Date.now(), status:'pending', message:''});
+    resp.style.display='block'; resp.textContent='⏳ Reservation request sent!';
+    document.getElementById('message').value='';
+    setTimeout(()=>{resp.style.display='none';},5000);
+  });
+</script>
 </body>
 </html>
