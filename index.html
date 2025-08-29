@@ -1,153 +1,656 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Parking System</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<style>
-  body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
-  .header { text-align: center; margin-bottom: 20px; }
-  h1 { margin:0; }
-  .dashboard { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; max-width:1200px; margin:0 auto; }
-  .parking-slot { background:white; border-radius:10px; padding:20px; position:relative; height:220px; border-top:4px solid transparent; }
-  .slot-title { font-size:1.2rem; margin:0; }
-  .slot-status { position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:white; font-weight:bold; }
-  .available { background-color: #4CAF50; }
-  .occupied { background-color: #F44336; }
-  .reserved { background-color: #FFC107; }
-  .led-panel { display:flex; justify-content:center; gap:15px; margin-top:40px; }
-  .led { width:40px; height:40px; border-radius:50%; background:#ddd; border:2px solid #aaa; }
-  .led.on { box-shadow:0 0 15px rgba(0,0,0,0.5); }
-  .led-red.on { background:#F44336; }
-  .led-yellow.on { background:#FFC107; }
-  .led-green.on { background:#4CAF50; }
-  .billing-popup { position: fixed; top:20px; right:20px; background:#2196F3; color:white; padding:20px; border-radius:10px; display:none; font-size:1.2rem; z-index:999; box-shadow:0 5px 15px rgba(0,0,0,0.3);}
-  .form-container { max-width:600px; margin:40px auto; padding:20px; background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-  .form-container input, .form-container button { width:100%; padding:12px; margin-bottom:10px; border-radius:4px; border:1px solid #ddd; font-size:16px; box-sizing:border-box; }
-  .form-container button { background:#3498db; color:white; border:none; cursor:pointer; }
-  .form-container button:hover { background:#2980b9; }
-  #form-response { display:none; padding:10px; border-radius:4px; font-weight:bold; margin-top:5px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking Billing System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .parking-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .status-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+        
+        .slot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .slot:last-child {
+            border-bottom: none;
+        }
+        
+        .slot-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .slot-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        
+        .available {
+            background: #4CAF50;
+        }
+        
+        .occupied {
+            background: #F44336;
+        }
+        
+        .reserved {
+            background: #FFC107;
+        }
+        
+        .slot-details {
+            flex-grow: 1;
+        }
+        
+        .slot-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .slot-car {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .billing-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .billing-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+        
+        .bill-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .bill-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .bill-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+        
+        .bill-form {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-generate {
+            background: #2ecc71;
+        }
+        
+        .btn-generate:hover {
+            background: #27ae60;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+        
+        .bill-receipt {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .bill-receipt h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .receipt-details {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-total {
+            font-weight: bold;
+            border-top: 2px solid #dee2e6;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+        
+        .payment-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .payment-btn {
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .payment-btn:hover {
+            background: #f8f9fa;
+            border-color: #3498db;
+        }
+        
+        .payment-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .payment-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .timer {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            color: #2c3e50;
+        }
+        
+        .timer span {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+    </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>Smart Parking System</h1>
-</div>
-
-<div class="dashboard">
-  <!-- Slot 1 -->
-  <div class="parking-slot" id="slot1-card">
-    <div class="slot-title">Slot 1</div>
-    <div class="slot-status" id="slot1-status">Loading...</div>
-    <div class="led-panel">
-      <div class="led led-red" id="slot1-red"></div>
-      <div class="led led-yellow" id="slot1-yellow"></div>
-      <div class="led led-green" id="slot1-green"></div>
+    <div class="container">
+        <header>
+            <h1>Smart Parking Billing System</h1>
+            <p>Manage parking slots and generate bills</p>
+        </header>
+        
+        <div class="content">
+            <div class="parking-status">
+                <h2 class="status-title">Parking Status</h2>
+                
+                <div class="slot">
+                    <div class="slot-info">
+                        <div class="slot-indicator available"></div>
+                        <div class="slot-details">
+                            <div class="slot-name">Slot 1</div>
+                            <div class="slot-car">Available</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectSlot(1)">Select</button>
+                </div>
+                
+                <div class="slot">
+                    <div class="slot-info">
+                        <div class="slot-indicator occupied"></div>
+                        <div class="slot-details">
+                            <div class="slot-name">Slot 2</div>
+                            <div class="slot-car">DHK-1234 (Occupied)</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectSlot(2)" disabled>Select</button>
+                </div>
+                
+                <div class="slot">
+                    <div class="slot-info">
+                        <div class="slot-indicator reserved"></div>
+                        <div class="slot-details">
+                            <div class="slot-name">Slot 3</div>
+                            <div class="slot-car">DHK-5678 (Reserved)</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectSlot(3)" disabled>Select</button>
+                </div>
+                
+                <div class="slot">
+                    <div class="slot-info">
+                        <div class="slot-indicator available"></div>
+                        <div class="slot-details">
+                            <div class="slot-name">Slot 4</div>
+                            <div class="slot-car">Available</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectSlot(4)">Select</button>
+                </div>
+            </div>
+            
+            <div class="billing-section">
+                <h2 class="billing-title">Billing Information</h2>
+                
+                <div class="bill-details">
+                    <div class="bill-row">
+                        <div>Selected Slot:</div>
+                        <div id="selected-slot">None</div>
+                    </div>
+                    <div class="bill-row">
+                        <div>Reservation Fee:</div>
+                        <div>$5.00</div>
+                    </div>
+                    <div class="bill-row">
+                        <div>Hourly Rate:</div>
+                        <div>$20.00</div>
+                    </div>
+                    <div class="bill-row">
+                        <div>Estimated Total:</div>
+                        <div id="estimated-total">$0.00</div>
+                    </div>
+                </div>
+                
+                <form class="bill-form" id="billing-form">
+                    <div class="form-group">
+                        <label for="car-number">Car Number</label>
+                        <input type="text" id="car-number" placeholder="Enter car number" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hours">Parking Duration (hours)</label>
+                        <input type="number" id="hours" min="1" value="1" required>
+                    </div>
+                    
+                    <button type="button" class="btn btn-generate" onclick="calculateBill()">Calculate Bill</button>
+                    <button type="button" class="btn" onclick="showBill()">Generate Bill</button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
-  <!-- Slot 2 -->
-  <div class="parking-slot" id="slot2-card">
-    <div class="slot-title">Slot 2</div>
-    <div class="slot-status" id="slot2-status">Loading...</div>
-    <div class="led-panel">
-      <div class="led led-red" id="slot2-red"></div>
-      <div class="led led-yellow" id="slot2-yellow"></div>
-      <div class="led led-green" id="slot2-green"></div>
+    
+    <div class="modal" id="bill-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            
+            <div class="bill-receipt">
+                <h3>Parking Invoice</h3>
+                
+                <div class="receipt-details">
+                    <div class="receipt-row">
+                        <div>Slot Number:</div>
+                        <div id="receipt-slot">1</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Car Number:</div>
+                        <div id="receipt-car">DHK-1234</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Entry Time:</div>
+                        <div id="receipt-entry">10:30 AM</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Exit Time:</div>
+                        <div id="receipt-exit">12:30 PM</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Duration:</div>
+                        <div id="receipt-duration">2 hours</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Reservation Fee:</div>
+                        <div>$5.00</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div>Parking Fee:</div>
+                        <div id="receipt-parking">$40.00</div>
+                    </div>
+                    <div class="receipt-row receipt-total">
+                        <div>Total Amount:</div>
+                        <div id="receipt-total">$45.00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timer">
+                Payment expires in: <span id="payment-timer">05:00</span>
+            </div>
+            
+            <h3>Select Payment Method</h3>
+            <div class="payment-options">
+                <div class="payment-btn" onclick="selectPayment('card')">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Credit Card</span>
+                </div>
+                <div class="payment-btn" onclick="selectPayment('paypal')">
+                    <i class="fab fa-paypal"></i>
+                    <span>PayPal</span>
+                </div>
+                <div class="payment-btn" onclick="selectPayment('bkash')">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>bKash</span>
+                </div>
+                <div class="payment-btn" onclick="selectPayment('cash')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Cash</span>
+                </div>
+            </div>
+            
+            <button class="btn" style="margin-top: 20px; width: 100%;" onclick="processPayment()">Confirm Payment</button>
+        </div>
     </div>
-  </div>
-  <!-- Slot 3 -->
-  <div class="parking-slot" id="slot3-card">
-    <div class="slot-title">Slot 3</div>
-    <div class="slot-status" id="slot3-status">Loading...</div>
-    <div class="led-panel">
-      <div class="led led-red" id="slot3-red"></div>
-      <div class="led led-yellow" id="slot3-yellow"></div>
-      <div class="led led-green" id="slot3-green"></div>
-    </div>
-  </div>
-  <!-- Slot 4 -->
-  <div class="parking-slot" id="slot4-card">
-    <div class="slot-title">Slot 4</div>
-    <div class="slot-status" id="slot4-status">Loading...</div>
-    <div class="led-panel">
-      <div class="led led-red" id="slot4-red"></div>
-      <div class="led led-yellow" id="slot4-yellow"></div>
-      <div class="led led-green" id="slot4-green"></div>
-    </div>
-  </div>
-</div>
 
-<!-- Billing popup -->
-<div class="billing-popup" id="billing-popup"></div>
-
-<!-- Reservation form -->
-<div class="form-container">
-  <h2>Send Reservation Request</h2>
-  <input type="text" id="message" placeholder="Slot,CarNumber e.g. 1,DHK-202326">
-  <button id="send-btn">Send Reservation</button>
-  <div id="form-response"></div>
-</div>
-
-<script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyD_fGKilSVECf6VP82OOPo08b1v1JOZHzk",
-    databaseURL: "https://ledcontrol-a41fb-default-rtdb.firebaseio.com/",
-    projectId: "ledcontrol-a41fb"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  // Update slot UI
-  function updateSlot(slotNum, status) {
-    const statusEl = document.getElementById(`slot${slotNum}-status`);
-    const red = document.getElementById(`slot${slotNum}-red`);
-    const yellow = document.getElementById(`slot${slotNum}-yellow`);
-    const green = document.getElementById(`slot${slotNum}-green`);
-    const card = document.getElementById(`slot${slotNum}-card`);
-    red.classList.remove('on'); yellow.classList.remove('on'); green.classList.remove('on'); card.style.borderTop='4px solid transparent';
-    if(status===1){statusEl.textContent='Occupied'; statusEl.className='slot-status occupied'; red.classList.add('on'); card.style.borderTop='4px solid #F44336';}
-    else if(status===2){statusEl.textContent='Reserved'; statusEl.className='slot-status reserved'; yellow.classList.add('on'); card.style.borderTop='4px solid #FFC107';}
-    else {statusEl.textContent='Available'; statusEl.className='slot-status available'; green.classList.add('on'); card.style.borderTop='4px solid #4CAF50';}
-  }
-
-  // Listen parking status
-  db.ref('parkingStatus').on('value', snapshot=>{
-    const data = snapshot.val(); if(!data) return;
-    const s1=data.slot1===1?1:0;
-    const s2=data.slot2===1?1:0;
-    const s3=data.slot3===1?1:0;
-    const s4=data.slot4===1?1:0;
-    updateSlot(1,s1); updateSlot(2,s2); updateSlot(3,s3); updateSlot(4,s4);
-  });
-
-  // Billing popup
-  db.ref('bills').on('child_added', snapshot=>{
-    const bill = snapshot.val(); if(!bill || !bill.amount) return;
-    const popup = document.getElementById('billing-popup');
-    popup.textContent = `💰 Bill Amount: ${bill.amount} BDT`;
-    popup.style.display='block';
-    setTimeout(()=>{popup.style.display='none';},5000);
-  });
-
-  // Reservation request
-  document.getElementById('send-btn').addEventListener('click', ()=>{
-    const msg = document.getElementById('message').value.trim();
-    const resp = document.getElementById('form-response');
-    if(!msg){resp.style.display='block'; resp.textContent='Enter slot and car number!'; return;}
-    const comma = msg.indexOf(',');
-    if(comma===-1){resp.style.display='block'; resp.textContent='Format: slot,CarNumber'; return;}
-    const slotNum=parseInt(msg.substring(0,comma));
-    const carNum=msg.substring(comma+1).trim();
-    if(slotNum<1||slotNum>4){resp.style.display='block'; resp.textContent='Slot must be 1-4'; return;}
-    db.ref('/reservationRequest').set({slot:slotNum, carNumber:carNum, timestamp:Date.now(), status:'pending', message:''});
-    resp.style.display='block'; resp.textContent='⏳ Reservation request sent!';
-    document.getElementById('message').value='';
-    setTimeout(()=>{resp.style.display='none';},5000);
-  });
-</script>
+    <script>
+        // Constants matching your ESP32 code
+        const RESERVATION_FEE = 5.00;
+        const RATE_PER_HOUR = 20.00;
+        
+        let selectedSlot = 0;
+        let selectedPayment = '';
+        let timerInterval;
+        let timeLeft = 300; // 5 minutes in seconds
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateParkingStatus();
+        });
+        
+        // Simulate getting parking status from server
+        function updateParkingStatus() {
+            // In a real implementation, this would fetch data from your Firebase backend
+            console.log("Updating parking status...");
+        }
+        
+        // Select a parking slot
+        function selectSlot(slotNumber) {
+            selectedSlot = slotNumber;
+            document.getElementById('selected-slot').textContent = `Slot ${slotNumber}`;
+            calculateBill();
+        }
+        
+        // Calculate the bill based on hours
+        function calculateBill() {
+            if (selectedSlot === 0) {
+                alert("Please select a parking slot first");
+                return;
+            }
+            
+            const hours = parseInt(document.getElementById('hours').value) || 1;
+            const parkingFee = hours * RATE_PER_HOUR;
+            const total = RESERVATION_FEE + parkingFee;
+            
+            document.getElementById('estimated-total').textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Show the bill modal
+        function showBill() {
+            if (selectedSlot === 0) {
+                alert("Please select a parking slot first");
+                return;
+            }
+            
+            const carNumber = document.getElementById('car-number').value;
+            if (!carNumber) {
+                alert("Please enter a car number");
+                return;
+            }
+            
+            const hours = parseInt(document.getElementById('hours').value) || 1;
+            const parkingFee = hours * RATE_PER_HOUR;
+            const total = RESERVATION_FEE + parkingFee;
+            
+            // Set current time and calculate exit time
+            const now = new Date();
+            const exitTime = new Date(now.getTime() + (hours * 60 * 60 * 1000));
+            
+            // Format times
+            const options = { hour: '2-digit', minute: '2-digit' };
+            const entryTimeStr = now.toLocaleTimeString('en-US', options);
+            const exitTimeStr = exitTime.toLocaleTimeString('en-US', options);
+            
+            // Update receipt
+            document.getElementById('receipt-slot').textContent = selectedSlot;
+            document.getElementById('receipt-car').textContent = carNumber;
+            document.getElementById('receipt-entry').textContent = entryTimeStr;
+            document.getElementById('receipt-exit').textContent = exitTimeStr;
+            document.getElementById('receipt-duration').textContent = `${hours} hour${hours !== 1 ? 's' : ''}`;
+            document.getElementById('receipt-parking').textContent = `$${parkingFee.toFixed(2)}`;
+            document.getElementById('receipt-total').textContent = `$${total.toFixed(2)}`;
+            
+            // Show modal and start timer
+            document.getElementById('bill-modal').style.display = 'flex';
+            startPaymentTimer();
+        }
+        
+        // Close the modal
+        function closeModal() {
+            document.getElementById('bill-modal').style.display = 'none';
+            clearInterval(timerInterval);
+            resetPaymentSelection();
+            timeLeft = 300; // Reset timer
+        }
+        
+        // Start the payment timer
+        function startPaymentTimer() {
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Payment time has expired. Please generate a new bill.");
+                    closeModal();
+                }
+            }, 1000);
+        }
+        
+        // Update the timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('payment-timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Select a payment method
+        function selectPayment(method) {
+            selectedPayment = method;
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.payment-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to selected button
+            event.target.closest('.payment-btn').classList.add('active');
+        }
+        
+        // Reset payment selection
+        function resetPaymentSelection() {
+            selectedPayment = '';
+            const buttons = document.querySelectorAll('.payment-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+        }
+        
+        // Process the payment
+        function processPayment() {
+            if (!selectedPayment) {
+                alert("Please select a payment method");
+                return;
+            }
+            
+            // Simulate payment processing
+            alert(`Processing ${selectedPayment.toUpperCase()} payment...`);
+            
+            // Simulate successful payment
+            setTimeout(function() {
+                alert("Payment successful! Thank you for using our parking service.");
+                closeModal();
+                
+                // Reset form
+                selectedSlot = 0;
+                document.getElementById('selected-slot').textContent = 'None';
+                document.getElementById('car-number').value = '';
+                document.getElementById('hours').value = '1';
+                document.getElementById('estimated-total').textContent = '$0.00';
+                
+                // Update parking status (in a real implementation, this would update Firebase)
+                updateParkingStatus();
+            }, 2000);
+        }
+    </script>
 </body>
 </html>
