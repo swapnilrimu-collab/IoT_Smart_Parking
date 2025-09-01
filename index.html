@@ -4,8 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <!-- Updated Firebase SDKs -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, orderByKey, limitToLast, child, get } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDMaJBTj6VJYWSOzCW-Vn5v5wfP_pIO8YQ",
+      authDomain: "smartparking-42d60.firebaseapp.com",
+      databaseURL: "https://smartparking-42d60-default-rtdb.firebaseio.com",
+      projectId: "smartparking-42d60",
+      storageBucket: "smartparking-42d60.firebasestorage.app",
+      messagingSenderId: "330597515854",
+      appId: "1:330597515854:web:7950f03ef26f1ffe67b91f",
+      measurementId: "G-HXQQ578WTB"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    
+    // Make database available globally
+    window.firebaseDatabase = database;
+    window.firebaseRef = ref;
+    window.firebaseOnValue = onValue;
+    window.firebaseSet = set;
+    window.firebaseOrderByKey = orderByKey;
+    window.firebaseLimitToLast = limitToLast;
+    window.firebaseChild = child;
+    window.firebaseGet = get;
+  </script>
   <style>
     :root {
       --available: #4CAF50;
@@ -330,6 +360,46 @@
       color: #333;
     }
 
+    /* Connection Status Indicator */
+    .connection-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .connection-status.connected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background-color: #F44336;
+      color: white;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .connected .status-dot {
+      background-color: #fff;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    .disconnected .status-dot {
+      background-color: #fff;
+    }
+
     @media (max-width: 600px) {
       .dashboard {
         grid-template-columns: 1fr;
@@ -361,6 +431,14 @@
         right: 10px;
         left: 10px;
         max-width: none;
+      }
+      
+      .connection-status {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        text-align: center;
+        justify-content: center;
       }
     }
   </style>
@@ -479,253 +557,295 @@
     <div id="bill-text"></div>
   </div>
 
+  <!-- Connection Status Indicator -->
+  <div id="connection-status" class="connection-status disconnected">
+    <span class="status-dot"></span>
+    <span id="connection-text">Connecting to Firebase...</span>
+  </div>
+
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDMaJBTj6VJYWSOzCW-Vn5v5wfP_pIO8YQ",
-      databaseURL: "https://smartparking-42d60-default-rtdb.firebaseio.com/",
-      projectId: "smartparking-42d60"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
     // Billing constants (from your ESP32 code)
     const RESERVATION_FEE = 5.00;
     const RATE_PER_HOUR = 20.00;
     let billTimer = null;
     let lastBillId = null;
 
-    function updateSlot(slotNum, status, carNumber = "") {
-      const statusElement = document.getElementById(`slot${slotNum}-status`);
-      const redLed = document.getElementById(`slot${slotNum}-red`);
-      const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
-      const greenLed = document.getElementById(`slot${slotNum}-green`);
-      const card = document.getElementById(`slot${slotNum}-card`);
-
-      // Reset all LEDs and borders
-      redLed.classList.remove('on');
-      yellowLed.classList.remove('on');
-      greenLed.classList.remove('on');
-      card.style.borderTop = '4px solid transparent';
-
-      if (status === 1) {
-        // Occupied - Red LED on
-        statusElement.textContent = carNumber ? `Occupied (${carNumber})` : 'Occupied';
-        statusElement.className = 'slot-status occupied';
-        redLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--occupied)';
-      } else if (status === 2) {
-        // Reserved - Yellow LED on
-        statusElement.textContent = carNumber ? `Reserved (${carNumber})` : 'Reserved';
-        statusElement.className = 'slot-status reserved';
-        yellowLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--reserved)';
+    // Wait for Firebase to be initialized
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("Page loaded, initializing Firebase");
+      
+      // Check if Firebase modules are loaded
+      if (typeof window.firebaseDatabase !== 'undefined') {
+        initializeApp();
       } else {
-        // Available - Green LED on
-        statusElement.textContent = 'Available';
-        statusElement.className = 'slot-status available';
-        greenLed.classList.add('on');
-        card.style.borderTop = '4px solid var(--available)';
-      }
-
-      document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
-    }
-
-    // Listen for real-time Firebase updates
-    database.ref('parkingStatus').on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        console.log("Firebase data received:", data);
-        
-        // Use the same logic as ESP32 to determine status
-        // ESP32 logic: occupied if sensor detects car, reserved if car number assigned but no car
-        const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
-        const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
-        const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
-        const status4 = data.slot4 === 1 ? 1 : (data.car4 && data.car4 !== "" ? 2 : 0);
-        
-        updateSlot(1, status1, data.car1 || "");
-        updateSlot(2, status2, data.car2 || "");
-        updateSlot(3, status3, data.car3 || "");
-        updateSlot(4, status4, data.car4 || "");
+        // Wait a bit for the modules to load
+        setTimeout(initializeApp, 1000);
       }
     });
 
-    // Monitor bills from Firebase (fixed implementation)
-    function setupBillListener() {
-      console.log("Setting up bill listener...");
-      
-      // Listen for new bills in the history
-      database.ref('bills/history').orderByKey().limitToLast(1).on('child_added', (snapshot) => {
-        const billData = snapshot.val();
-        console.log("New bill detected:", billData);
+    function initializeApp() {
+      const database = window.firebaseDatabase;
+      const ref = window.firebaseRef;
+      const onValue = window.firebaseOnValue;
+      const set = window.firebaseSet;
+      const orderByKey = window.firebaseOrderByKey;
+      const limitToLast = window.firebaseLimitToLast;
+      const child = window.firebaseChild;
+      const get = window.firebaseGet;
+
+      // Update connection status
+      updateConnectionStatus('connected', 'Connected to Firebase');
+
+      function updateSlot(slotNum, status, carNumber = "") {
+        const statusElement = document.getElementById(`slot${slotNum}-status`);
+        const redLed = document.getElementById(`slot${slotNum}-red`);
+        const yellowLed = document.getElementById(`slot${slotNum}-yellow`);
+        const greenLed = document.getElementById(`slot${slotNum}-green`);
+        const card = document.getElementById(`slot${slotNum}-card`);
+
+        // Reset all LEDs and borders
+        redLed.classList.remove('on');
+        yellowLed.classList.remove('on');
+        greenLed.classList.remove('on');
+        card.style.borderTop = '4px solid transparent';
+
+        if (status === 1) {
+          // Occupied - Red LED on
+          statusElement.textContent = carNumber ? `Occupied (${carNumber})` : 'Occupied';
+          statusElement.className = 'slot-status occupied';
+          redLed.classList.add('on');
+          card.style.borderTop = '4px solid var(--occupied)';
+        } else if (status === 2) {
+          // Reserved - Yellow LED on
+          statusElement.textContent = carNumber ? `Reserved (${carNumber})` : 'Reserved';
+          statusElement.className = 'slot-status reserved';
+          yellowLed.classList.add('on');
+          card.style.borderTop = '4px solid var(--reserved)';
+        } else {
+          // Available - Green LED on
+          statusElement.textContent = 'Available';
+          statusElement.className = 'slot-status available';
+          greenLed.classList.add('on');
+          card.style.borderTop = '4px solid var(--available)';
+        }
+
+        document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
+      }
+
+      // Listen for real-time Firebase updates
+      const parkingStatusRef = ref(database, 'parkingStatus');
+      onValue(parkingStatusRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          console.log("Firebase data received:", data);
+          
+          // Use the same logic as ESP32 to determine status
+          // ESP32 logic: occupied if sensor detects car, reserved if car number assigned but no car
+          const status1 = data.slot1 === 1 ? 1 : (data.car1 && data.car1 !== "" ? 2 : 0);
+          const status2 = data.slot2 === 1 ? 1 : (data.car2 && data.car2 !== "" ? 2 : 0);
+          const status3 = data.slot3 === 1 ? 1 : (data.car3 && data.car3 !== "" ? 2 : 0);
+          const status4 = data.slot4 === 1 ? 1 : (data.car4 && data.car4 !== "" ? 2 : 0);
+          
+          updateSlot(1, status1, data.car1 || "");
+          updateSlot(2, status2, data.car2 || "");
+          updateSlot(3, status3, data.car3 || "");
+          updateSlot(4, status4, data.car4 || "");
+        }
+      }, (error) => {
+        console.error("Firebase connection error:", error);
+        updateConnectionStatus('disconnected', 'Connection error: ' + error.message);
+      });
+
+      // Monitor bills from Firebase
+      function setupBillListener() {
+        console.log("Setting up bill listener...");
         
-        if (billData && (!lastBillId || snapshot.key !== lastBillId)) {
-          lastBillId = snapshot.key;
-          showBillPopup(billData);
+        // Listen for new bills in the history
+        const billsHistoryRef = ref(database, 'bills/history');
+        onValue(child(billsHistoryRef, orderByKey(), limitToLast(1)), (snapshot) => {
+          const billData = snapshot.val();
+          if (snapshot.exists()) {
+            const billKey = Object.keys(billData)[0];
+            const bill = billData[billKey];
+            
+            console.log("New bill detected:", bill);
+            
+            if (bill && (!lastBillId || billKey !== lastBillId)) {
+              lastBillId = billKey;
+              showBillPopup(bill);
+              
+              // Set a timeout to hide the bill after 8 seconds
+              if (billTimer) clearTimeout(billTimer);
+              billTimer = setTimeout(() => {
+                closeBill();
+              }, 8000);
+            }
+          }
+        }, (error) => {
+          console.error("Error listening to bills:", error);
+        });
+        
+        // Also check the last bill directly
+        const lastBillRef = ref(database, 'bills/last');
+        get(lastBillRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const billData = snapshot.val();
+            console.log("Last bill found:", billData);
+            showBillPopup(billData);
+            
+            // Set a timeout to hide the bill after 8 seconds
+            if (billTimer) clearTimeout(billTimer);
+            billTimer = setTimeout(() => {
+              closeBill();
+            }, 8000);
+          }
+        }).catch((error) => {
+          console.error("Error checking last bill:", error);
+        });
+      }
+
+      // Function to show bill popup
+      function showBillPopup(billData) {
+        const popup = document.getElementById('bill-popup');
+        const billText = document.getElementById('bill-text');
+        
+        // Format the bill information
+        const hours = Math.floor(billData.durationSeconds / 3600);
+        const minutes = Math.floor((billData.durationSeconds % 3600) / 60);
+        
+        // Format entry and exit times
+        const entryTime = billData.entryTime ? new Date(billData.entryTime * 1000).toLocaleTimeString() : 'N/A';
+        const exitTime = billData.exitTime ? new Date(billData.exitTime * 1000).toLocaleTimeString() : 'N/A';
+        
+        let html = `
+          <div class="bill-detail"><span>Slot:</span> <span>${billData.slot || 'N/A'}</span></div>
+          <div class="bill-detail"><span>Car:</span> <span>${billData.car || 'N/A'}</span></div>
+          <div class="bill-detail"><span>Entry Time:</span> <span>${entryTime}</span></div>
+          <div class="bill-detail"><span>Exit Time:</span> <span>${exitTime}</span></div>
+          <div class="bill-detail"><span>Duration:</span> <span>${hours}h ${minutes}m</span></div>
+          <div class="bill-detail"><span>Reservation Fee:</span> <span>$${billData.reservationFee?.toFixed(2) || '0.00'}</span></div>
+          <div class="bill-detail"><span>Parking Fee:</span> <span>$${billData.parkingFee?.toFixed(2) || '0.00'}</span></div>
+          <div class="bill-detail bill-total"><span>Total Amount:</span> <span>$${billData.total?.toFixed(2) || '0.00'}</span></div>
+        `;
+        
+        billText.innerHTML = html;
+        popup.style.display = 'block';
+        
+        // Log for debugging
+        console.log("Bill popup shown:", billData);
+      }
+
+      // Function to close bill popup
+      window.closeBill = function() {
+        const popup = document.getElementById('bill-popup');
+        popup.style.animation = 'slideOut 0.5s ease';
+        setTimeout(() => {
+          popup.style.display = 'none';
+          popup.style.animation = 'slideIn 0.5s ease';
+        }, 500);
+      }
+
+      // Monitor reservation request status
+      const reservationStatusRef = ref(database, 'reservationRequest/status');
+      onValue(reservationStatusRef, (snapshot) => {
+        const status = snapshot.val();
+        if (status === 'accepted' || status === 'rejected') {
+          const responseDiv = document.getElementById('form-response');
+          responseDiv.style.display = 'block';
           
-          // Set a timeout to hide the bill after 8 seconds
-          if (billTimer) clearTimeout(billTimer);
-          billTimer = setTimeout(() => {
-            closeBill();
-          }, 8000);
+          if (status === 'accepted') {
+            responseDiv.style.backgroundColor = '#4CAF50';
+            responseDiv.style.color = 'white';
+            responseDiv.textContent = '✅ Reservation accepted by ESP32!';
+          } else {
+            const reservationMessageRef = ref(database, 'reservationRequest/message');
+            get(reservationMessageRef).then((msgSnapshot) => {
+              const message = msgSnapshot.val() || 'Reservation rejected';
+              responseDiv.style.backgroundColor = '#F44336';
+              responseDiv.style.color = 'white';
+              responseDiv.textContent = '❌ ' + message;
+            });
+          }
+          
+          // Auto-hide after 5 seconds
+          setTimeout(() => {
+            responseDiv.style.display = 'none';
+          }, 5000);
+          
+          // Reset the status
+          setTimeout(() => {
+            set(ref(database, 'reservationRequest/status'), 'pending');
+          }, 6000);
         }
       });
-      
-      // Also check the last bill directly
-      database.ref('bills/last').once('value').then((snapshot) => {
-        const billData = snapshot.val();
-        if (billData) {
-          console.log("Last bill found:", billData);
-          showBillPopup(billData);
-          
-          // Set a timeout to hide the bill after 8 seconds
-          if (billTimer) clearTimeout(billTimer);
-          billTimer = setTimeout(() => {
-            closeBill();
-          }, 8000);
-        }
-      }).catch((error) => {
-        console.error("Error checking last bill:", error);
-      });
-    }
 
-    // Function to show bill popup
-    function showBillPopup(billData) {
-      const popup = document.getElementById('bill-popup');
-      const billText = document.getElementById('bill-text');
-      
-      // Format the bill information
-      const hours = Math.floor(billData.durationSeconds / 3600);
-      const minutes = Math.floor((billData.durationSeconds % 3600) / 60);
-      
-      // Format entry and exit times
-      const entryTime = billData.entryTime ? new Date(billData.entryTime * 1000).toLocaleTimeString() : 'N/A';
-      const exitTime = billData.exitTime ? new Date(billData.exitTime * 1000).toLocaleTimeString() : 'N/A';
-      
-      let html = `
-        <div class="bill-detail"><span>Slot:</span> <span>${billData.slot || 'N/A'}</span></div>
-        <div class="bill-detail"><span>Car:</span> <span>${billData.car || 'N/A'}</span></div>
-        <div class="bill-detail"><span>Entry Time:</span> <span>${entryTime}</span></div>
-        <div class="bill-detail"><span>Exit Time:</span> <span>${exitTime}</span></div>
-        <div class="bill-detail"><span>Duration:</span> <span>${hours}h ${minutes}m</span></div>
-        <div class="bill-detail"><span>Reservation Fee:</span> <span>$${billData.reservationFee?.toFixed(2) || '0.00'}</span></div>
-        <div class="bill-detail"><span>Parking Fee:</span> <span>$${billData.parkingFee?.toFixed(2) || '0.00'}</span></div>
-        <div class="bill-detail bill-total"><span>Total Amount:</span> <span>$${billData.total?.toFixed(2) || '0.00'}</span></div>
-      `;
-      
-      billText.innerHTML = html;
-      popup.style.display = 'block';
-      
-      // Log for debugging
-      console.log("Bill popup shown:", billData);
-    }
+      // Handle message form submission via Firebase
+      document.getElementById('message-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const message = document.getElementById('message').value.trim();
+        if (!message) return;
 
-    // Function to close bill popup
-    function closeBill() {
-      const popup = document.getElementById('bill-popup');
-      popup.style.animation = 'slideOut 0.5s ease';
-      setTimeout(() => {
-        popup.style.display = 'none';
-        popup.style.animation = 'slideIn 0.5s ease';
-      }, 500);
-    }
-
-    // Monitor reservation request status
-    database.ref('reservationRequest/status').on('value', (snapshot) => {
-      const status = snapshot.val();
-      if (status === 'accepted' || status === 'rejected') {
         const responseDiv = document.getElementById('form-response');
         responseDiv.style.display = 'block';
-        
-        if (status === 'accepted') {
-          responseDiv.style.backgroundColor = '#4CAF50';
-          responseDiv.style.color = 'white';
-          responseDiv.textContent = '✅ Reservation accepted by ESP32!';
-        } else {
-          database.ref('reservationRequest/message').once('value', (msgSnapshot) => {
-            const message = msgSnapshot.val() || 'Reservation rejected';
-            responseDiv.style.backgroundColor = '#F44336';
-            responseDiv.style.color = 'white';
-            responseDiv.textContent = '❌ ' + message;
+        responseDiv.style.backgroundColor = '#ddd';
+        responseDiv.style.color = '#333';
+        responseDiv.textContent = 'Sending reservation request...';
+
+        try {
+          // Validate message format
+          const commaIndex = message.indexOf(',');
+          if (commaIndex === -1) {
+            throw new Error('Invalid format. Use: slot,carNumber (e.g., 1,DHK-202326)');
+          }
+
+          const slotNum = parseInt(message.substring(0, commaIndex));
+          const carNumber = message.substring(commaIndex + 1).trim();
+
+          if (slotNum < 1 || slotNum > 4) {
+            throw new Error('Slot number must be between 1-4');
+          }
+
+          if (carNumber.length < 2) {
+            throw new Error('Car number is required');
+          }
+
+          // Send reservation request to Firebase
+          await set(ref(database, 'reservationRequest'), {
+            slot: slotNum,
+            carNumber: carNumber,
+            timestamp: Date.now(),
+            status: 'pending',
+            message: ''
           });
+
+          responseDiv.style.backgroundColor = '#2196F3';
+          responseDiv.style.color = 'white';
+          responseDiv.textContent = '⏳ Reservation request sent! Waiting for ESP32 response...';
+          document.getElementById('message').value = '';
+
+        } catch (err) {
+          responseDiv.style.backgroundColor = '#F44336';
+          responseDiv.style.color = 'white';
+          responseDiv.textContent = '❌ ' + err.message;
+          
+          setTimeout(() => {
+            responseDiv.style.display = 'none';
+          }, 3000);
         }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 5000);
-        
-        // Reset the status
-        setTimeout(() => {
-          database.ref('reservationRequest/status').set('pending');
-        }, 6000);
-      }
-    });
+      });
 
-    // Handle message form submission via Firebase
-    document.getElementById('message-form').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const message = document.getElementById('message').value.trim();
-      if (!message) return;
-
-      const responseDiv = document.getElementById('form-response');
-      responseDiv.style.display = 'block';
-      responseDiv.style.backgroundColor = '#ddd';
-      responseDiv.style.color = '#333';
-      responseDiv.textContent = 'Sending reservation request...';
-
-      try {
-        // Validate message format
-        const commaIndex = message.indexOf(',');
-        if (commaIndex === -1) {
-          throw new Error('Invalid format. Use: slot,carNumber (e.g., 1,DHK-202326)');
-        }
-
-        const slotNum = parseInt(message.substring(0, commaIndex));
-        const carNumber = message.substring(commaIndex + 1).trim();
-
-        if (slotNum < 1 || slotNum > 4) {
-          throw new Error('Slot number must be between 1-4');
-        }
-
-        if (carNumber.length < 2) {
-          throw new Error('Car number is required');
-        }
-
-        // Send reservation request to Firebase
-        await database.ref('/reservationRequest').set({
-          slot: slotNum,
-          carNumber: carNumber,
-          timestamp: Date.now(),
-          status: 'pending',
-          message: ''
-        });
-
-        responseDiv.style.backgroundColor = '#2196F3';
-        responseDiv.style.color = 'white';
-        responseDiv.textContent = '⏳ Reservation request sent! Waiting for ESP32 response...';
-        document.getElementById('message').value = '';
-
-      } catch (err) {
-        responseDiv.style.backgroundColor = '#F44336';
-        responseDiv.style.color = 'white';
-        responseDiv.textContent = '❌ ' + err.message;
-        
-        setTimeout(() => {
-          responseDiv.style.display = 'none';
-        }, 3000);
-      }
-    });
-
-    // Initialize the bill listener when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log("Page loaded, initializing Firebase bill listener");
+      // Initialize the bill listener
+      console.log("Initializing Firebase bill listener");
       setupBillListener();
-    });
+    }
+
+    function updateConnectionStatus(status, message) {
+      const statusElement = document.getElementById('connection-status');
+      const textElement = document.getElementById('connection-text');
+      
+      statusElement.className = `connection-status ${status}`;
+      textElement.textContent = message;
+    }
   </script>
 </body>
 </html>
-
