@@ -4,22 +4,14 @@ Methodology
 The Smart Parking System is implemented through an integration of IoT hardware, computer vision (OCR), and a cloud-connected web platform. The methodology is divided into hardware setup, software implementation, system communication, system operation, and data management.
 ________________________________________
 1. Hardware Setup
-•	Raspberry Pi 5:
-Controls the entry and exit lanes, barrier servos, IR sensors, and the PiCamera for license plate recognition.
-•	ESP32 Controller:
-Handles parking slot monitoring, reservation management, and communication with Firebase.
-•	IR Sensors:
-Detect presence of cars at entry, exit, and inside slots.
-•	Servo Motors:
-Operate the entry and exit barriers.
-•	RFID/I2C Card Reader:
-Identifies vehicles and links them to billing.
-•	LED Indicators:
-Show slot status: Available (Green), Occupied (Red), Reserved (Yellow).
-•	Firebase Cloud Database:
-Stores slot states, reservations, billing records, and synchronization logs.
-•	Web Dashboard (HTML/JS):
-Provides a real-time monitoring and control interface for users.
+•	Raspberry Pi 5: Controls the entry and exit lanes, barrier servos, IR sensors, and the PiCamera for license plate recognition.
+•	ESP32 Controller: Handles parking slot monitoring, reservation management, and communication with Firebase.
+•	IR Sensors: Detect presence of cars at entry, exit, and inside slots.
+•	Servo Motors: Operate the entry and exit barriers.
+•	RFID/I2C Card Reader: Identifies vehicles and links them to billing.
+•	LED Indicators: Show slot status: Available (Green), Occupied (Red), Reserved (Yellow).
+•	Firebase Cloud Database: Stores slot states, reservations, billing records, and synchronization logs.
+•	Web Dashboard (HTML/JS): Provides a real-time monitoring and control interface for users.
 ________________________________________
 2. Software Implementation
 •	Raspberry Pi (Python)
